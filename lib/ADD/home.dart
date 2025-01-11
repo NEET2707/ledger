@@ -8,6 +8,33 @@ import '../account_data.dart';
 import '../colors.dart';
 import '../database_helper.dart'; // Import your database helper
 
+
+// Account table field names
+const String accountId = "account_id";
+const String accountName = "account_name";
+const String accountContact = "account_contact";
+const String accountEmail = "account_email";
+const String accountDescription = "account_description";
+const String accountImage = "image";
+const String accountTotal = "account_total";
+const String accountDateAdded = "date_added";
+const String accountDateModified = "date_modified";
+const String accountIsDelete = "is_delete";
+
+// Transaction table field names
+const String transactionAccountId = "account_id";
+const String transactionId = "transaction_id";
+const String transactionAmount = "transaction_amount";
+const String transactionDate = "transaction_date";
+const String transactionIsDueReminder = "is_due_reminder";
+const String transactionReminderDate = "reminder_date";
+const String transactionIsCredited = "is_credited";
+const String transactionNote = "transaction_note";
+const String transactionDateAdded = "date_added";
+const String transactionDateModified = "date_modified";
+const String transactionIsDelete = "is_delete";
+
+
 class Home extends StatefulWidget {
   Home({super.key});
 
@@ -17,36 +44,56 @@ class Home extends StatefulWidget {
 
 class _AllAccountsState extends State<Home> {
   String selectedTab = "ALL";
+  String tbalance = "balance";
   late Future<List<Map<String, dynamic>>> accounts;
 
   @override
   void initState() {
     super.initState();
-// Fetch all accounts initially
+    accounts = _getFilteredAccounts();
   }
 
-// Filter accounts based on selected tab
   Future<List<Map<String, dynamic>>> _getFilteredAccounts() async {
-    final allAccounts = await accounts;
+    final allAccounts = await DatabaseHelper.instance.fetchAccountsWithBalance();
     if (selectedTab == "ALL") {
       return allAccounts; // Show all accounts
     } else if (selectedTab == "DEBIT") {
-// Filter for debit accounts (assuming 'type' field distinguishes debit transactions)
-      return allAccounts
-          .where((account) => account['type'] == 'DEBIT')
-          .toList();
+      // Filter for debit accounts (negative balance means debit)
+      return allAccounts.where((account) => account[tbalance] < 0).toList();
     } else if (selectedTab == "CREDIT") {
-// Filter for credit accounts (assuming 'type' field distinguishes credit transactions)
-      return allAccounts
-          .where((account) => account['type'] == 'CREDIT')
-          .toList();
+      // Filter for credit accounts (positive balance means credit)
+      return allAccounts.where((account) => account[tbalance] > 0).toList();
     }
     return []; // Return an empty list if no matching tab
   }
 
+  Future<Map<String, double>> _calculateTotals() async {
+    final accountList = await DatabaseHelper.instance.fetchAccountsWithBalance();
+
+    double totalBalance = 0;
+    double totalCredits = 0;
+    double totalDebits = 0;
+
+    for (var account in accountList) {
+      print(account);
+      final balance = account[tbalance] ?? 0.0;
+      final credit = account[tbalance] > 0.0 ? account[tbalance] : 0.0;
+      final debit = account[tbalance] < 0.0 ? account[tbalance] : 0.0;
+
+      totalBalance += balance;
+      totalCredits += credit;
+      totalDebits += debit;
+    }
+
+    return {
+      'totalBalance': totalBalance,
+      'totalCredits': totalCredits,
+      'totalDebits': totalDebits,
+    };
+  }
+
   @override
   Widget build(BuildContext context) {
-    accounts = DatabaseHelper.instance.fetchAccounts();
     return Scaffold(
       appBar: AppBar(
         backgroundColor: themecolor,
@@ -90,11 +137,20 @@ class _AllAccountsState extends State<Home> {
             backgroundColor: Colors.white,
             label: 'Add Transaction',
             labelStyle: TextStyle(fontSize: 16),
-            onTap: () {
-              Navigator.push(context,
-                  MaterialPageRoute(builder: (context) => AddTransaction()));
+            onTap: () async {
+              final shouldRefresh = await Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => AddTransaction()), // Ensure TransactionPage is defined
+              );
+
+              if (shouldRefresh == true) {
+                setState(() {
+                  accounts = _getFilteredAccounts(); // Refresh the accounts list
+                });
+              }
             },
           ),
+
           SpeedDialChild(
             child: Icon(Icons.person_add, color: Colors.black),
             backgroundColor: Colors.white,
@@ -110,88 +166,114 @@ class _AllAccountsState extends State<Home> {
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-// Current A/C Section
-          Container(
-            color: Colors.blueAccent,
-            padding: EdgeInsets.symmetric(
-                horizontal: 12.0, vertical: 8.0), // Reduced padding
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Text(
-                  "Current A/C:",
-                  style: TextStyle(
-                      fontSize: 16, color: Colors.white), // Reduced font size
-                ),
-                SizedBox(height: 4), // Reduced spacing
-                Text(
-                  "₹ 0",
-                  style: TextStyle(
-                    fontSize: 20, // Reduced font size
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
+          // Current A/C Section
+          FutureBuilder<Map<String, double>>(
+            future: _calculateTotals(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return Container(
+                  color: Colors.blueAccent,
+                  padding: EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+                  child: Center(
+                    child: CircularProgressIndicator(),
                   ),
-                ),
-                SizedBox(height: 4), // Reduced spacing
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Row(
-                      children: [
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(
-                              16), // Reduced border radius
-                          child: Container(
-                            height: 32, // Reduced height
-                            width: 32, // Reduced width
-                            color: Colors.white,
-                            child: Icon(
-                              Icons.arrow_upward_rounded,
-                              color: Colors.blueAccent,
-                              size: 24, // Reduced icon size
-                            ),
-                          ),
-                        ),
-                        SizedBox(width: 6), // Reduced spacing
-                        Text(
-                          "₹ 0 Credit",
-                          style: TextStyle(
-                              fontSize: 14,
-                              color: Colors.white), // Reduced font size
-                        ),
-                      ],
+                );
+              } else if (snapshot.hasError) {
+                return Container(
+                  color: Colors.blueAccent,
+                  padding: EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+                  child: Center(
+                    child: Text(
+                      'Error: ${snapshot.error}',
+                      style: TextStyle(color: Colors.white),
                     ),
-                    Row(
-                      children: [
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(
-                              16), // Reduced border radius
-                          child: Container(
-                            height: 32, // Reduced height
-                            width: 32, // Reduced width
-                            color: Colors.white,
-                            child: Icon(
-                              Icons.arrow_downward_rounded,
-                              color: Colors.blueAccent,
-                              size: 24, // Reduced icon size
-                            ),
+                  ),
+                );
+              } else {
+                final totals = snapshot.data!;
+                final totalBalance = totals['totalBalance']!;
+                final totalCredits = totals['totalCredits']!;
+                final totalDebits = totals['totalDebits']!;
+
+                return Container(
+                  color: Colors.blueAccent,
+                  padding: EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Text(
+                        "Current A/C:",
+                        style: TextStyle(
+                            fontSize: 16, color: Colors.white),
+                      ),
+                      SizedBox(height: 4),
+                      Text(
+                        "₹ ${totalBalance.toStringAsFixed(2)}",
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                      SizedBox(height: 4),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Row(
+                            children: [
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(16),
+                                child: Container(
+                                  height: 32,
+                                  width: 32,
+                                  color: Colors.white,
+                                  child: Icon(
+                                    Icons.arrow_upward_rounded,
+                                    color: Colors.blueAccent,
+                                    size: 24,
+                                  ),
+                                ),
+                              ),
+                              SizedBox(width: 6),
+                              Text(
+                                "₹ ${totalCredits.toStringAsFixed(2)} Credit",
+                                style: TextStyle(
+                                    fontSize: 14, color: Colors.white),
+                              ),
+                            ],
                           ),
-                        ),
-                        SizedBox(width: 6), // Reduced spacing
-                        Text(
-                          "₹ 0 Debit",
-                          style: TextStyle(
-                              fontSize: 14,
-                              color: Colors.white), // Reduced font size
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ],
-            ),
+                          Row(
+                            children: [
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(16),
+                                child: Container(
+                                  height: 32,
+                                  width: 32,
+                                  color: Colors.white,
+                                  child: Icon(
+                                    Icons.arrow_downward_rounded,
+                                    color: Colors.blueAccent,
+                                    size: 24,
+                                  ),
+                                ),
+                              ),
+                              SizedBox(width: 6),
+                              Text(
+                                "₹ ${totalDebits.toStringAsFixed(2)} Debit",
+                                style: TextStyle(
+                                    fontSize: 14, color: Colors.white),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                );
+              }
+            },
           ),
-// Filter Buttons Section
+
           Container(
             color: Colors.blueAccent,
             child: Row(
@@ -202,11 +284,10 @@ class _AllAccountsState extends State<Home> {
               ],
             ),
           ),
-// Tab Content Section
+
           Expanded(
             child: FutureBuilder<List<Map<String, dynamic>>>(
-              future:
-                  _getFilteredAccounts(), // Fetch filtered accounts based on selected tab
+              future: _getFilteredAccounts(), // Fetch filtered accounts based on selected tab
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return Center(child: CircularProgressIndicator());
@@ -216,68 +297,80 @@ class _AllAccountsState extends State<Home> {
                   return Center(child: Text('No accounts found'));
                 } else {
                   final accountList = snapshot.data!;
-                  return ListView.builder(
-                    itemCount: accountList.length,
-                    itemBuilder: (context, index) {
-                      final account = accountList[index];
-                      return Card(
-                        margin: EdgeInsets.symmetric(
-                            vertical: 8.0, horizontal: 16.0),
-                        child: ListTile(
-                          contentPadding: EdgeInsets.all(4.0),
-                          leading: CircleAvatar(
-                            radius: 24, // Adjust the size as needed
-                            backgroundColor:
-                                Colors.blueAccent, // You can change the color
-                            child: Text(
-                              account['name'][0]
-                                  .toUpperCase(), // First letter of the name
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 18, // Adjust font size if needed
+                  return Padding(
+                    padding: const EdgeInsets.all(12.0),
+                    child: ListView.separated(
+                      separatorBuilder: (context, index) {
+                        return Container(color: Colors.white,child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                          child: Divider(),
+                        ));
+                      },
+                      itemCount: accountList.length,
+                      itemBuilder: (context, index) {
+                        final account = accountList[index];
+                        final balance = account['balance'] ?? 0.0;
+
+                        print("accccccc id _>> $account");
+
+                        return Container(
+                          color: Colors.white,
+                          child: ListTile(
+                            contentPadding: EdgeInsets.symmetric(horizontal: 8), // Comfortable padding
+                            leading: CircleAvatar(
+                              radius: 24.0, // Larger circle avatar for emphasis
+                              backgroundColor: themecolor,
+                              child: Text(
+                                account['account_name'][0].toUpperCase(),
+                                style: TextStyle(color: Colors.white, fontSize: 18.0, fontWeight: FontWeight.bold),
                               ),
                             ),
-                          ),
-                          title: Text(account['name']),
-                          subtitle: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text('Mobile: ${account['mobile_number']}'),
-// Uncomment or modify these lines if needed
-// Text('Email: ${account['email']}'),
-// Text('Description: ${account['description']}'),
-                            ],
-                          ),
-                          onTap: () {
-                            Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (context) => AccountData(
-                                          name: account['name'],
-                                          id: account['id'].toString(),
-                                          num: account['mobile_number'],
-                                        )));
-                          },
-                          trailing: IconButton(
-                            icon: Icon(Icons.arrow_forward),
-                            onPressed: () {
-// Navigate to AccountData screen with selected account details
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => AccountData(
-                                    name: account['name'],
-                                    num: account['mobile_number'],
-                                    id: account['id'].toString(),
+                            title: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  account['account_name'],
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16.0, // Slightly larger font for the name
                                   ),
                                 ),
-                              );
-                            },
+                                Text(
+                                  "₹ ${balance.toStringAsFixed(2)}",
+                                  style: TextStyle(
+                                    color: balance >= 0 ? Colors.green : Colors.red,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16.0, // Match font size for uniformity
+                                  ),
+                                ),
+                              ],
+                            ),
+                            subtitle: Padding(
+                              padding: const EdgeInsets.only(top: 4.0),
+                              child: Text(
+                                '${account['account_contact']}',
+                                style: TextStyle(fontSize: 14.0, color: Colors.grey[600]),
+                              ),
+                            ),
+                            trailing: IconButton(
+                              icon: Icon(Icons.arrow_forward_ios, color: Colors.black, size: 18,), // Icon is white
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => AccountData(
+                                      name: account['account_name'],
+                                      id: account['account_id'].toString(),
+                                      num: account['account_contact'],
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
                           ),
-                        ),
-                      );
-                    },
+                        );
+                      },
+                    ),
                   );
                 }
               },
@@ -294,6 +387,7 @@ class _AllAccountsState extends State<Home> {
         onTap: () {
           setState(() {
             selectedTab = title;
+            accounts = _getFilteredAccounts(); // Update accounts based on selected tab
           });
         },
         child: Container(
@@ -310,18 +404,5 @@ class _AllAccountsState extends State<Home> {
         ),
       ),
     );
-  }
-
-  String _getTabContent() {
-    switch (selectedTab) {
-      case "ALL":
-        return "No Accounts Found (All Transactions)";
-      case "DEBIT":
-        return "No Accounts Found (Debit Transactions)";
-      case "CREDIT":
-        return "No Accounts Found (Credit Transactions)";
-      default:
-        return "No Accounts Found";
-    }
   }
 }

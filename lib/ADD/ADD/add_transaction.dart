@@ -24,20 +24,20 @@ class _AddTransactionState extends State<AddTransaction> {
   DateTime _transactionDate = DateTime.now();
   DateTime? _reminderDate;
   bool _isReminderChecked = false;
-  int id1 = 0; // Ensure id is defined as int
+  int tid = 0; // Ensure id is defined as int
   String name = ""; // Ensure name is defined as String
-
+  int accountId = 0;
 
   @override
   void initState() {
     super.initState();
     name = widget.name ?? ""; // Initialize name safely
-    // if (widget.id != null) {
-    //    // Fetch transaction details for editing
-    // }
-    if(widget.flag==true){
-      id1 = int.tryParse(widget.tid ?? '') ?? 0;  // Safely parse the id as int
-      _fetchTransactionDetails(id1);
+    if (widget.id != null) {
+      accountId = int.parse(widget.id.toString());
+    }
+    if(widget.flag == true){
+      tid = int.tryParse(widget.tid ?? '') ?? 0;  // Safely parse the id as int
+      _fetchTransactionDetails(tid);
     }
   }
 
@@ -45,26 +45,24 @@ class _AddTransactionState extends State<AddTransaction> {
     final db = await DatabaseHelper.instance.database;
     final result = await db.query(
       'transactions',
-      where: 'id = ?',
+      where: '$transaction_id = ?',
       whereArgs: [id],
     );
 
     if (result.isNotEmpty) {
       final transaction = result.first;
       setState(() {
-        amtcon.text = (transaction['amount'] as double?)?.toString() ?? '';  // Cast to double
-        _transactionDate = DateTime.parse(transaction['transaction_date'] as String);  // Cast to String, then parse
-        _reminderDate = transaction['reminder_date'] != null
-            ? DateTime.parse(transaction['reminder_date'] as String)  // Cast to String, then parse
+        amtcon.text = (transaction[transaction_amount] as double?)?.toString() ?? '';  // Cast to double
+        _transactionDate = DateTime.parse(transaction[transaction_date] as String);  // Cast to String, then parse
+        _reminderDate = transaction[transaction_reminder_date] != null
+            ? DateTime.parse(transaction[transaction_reminder_date] as String)  // Cast to String, then parse
             : null;
         _isReminderChecked = _reminderDate != null;
         // Ensure the account name is set correctly
-        name = transaction['account_name']?.toString() ?? '';  // Use null-aware operators to handle null values
+        name = transaction["account_name"]?.toString() ?? '';  // Use null-aware operators to handle null values
       });
     }
   }
-
-
 
   Future<void> _selectDate(BuildContext context, DateTime initialDate,
       Function(DateTime) onDateSelected) async {
@@ -142,9 +140,11 @@ class _AddTransactionState extends State<AddTransaction> {
                     );
                     if (result != null) {
                       setState(() {
-                        id1 = int.tryParse(result['id']?.toString() ?? '0') ?? 0;  // Safely parse the id
-                        name = result['name']?.toString() ?? '';  // Safely handle null name
+                        accountId = int.tryParse(result["account_id"]?.toString() ?? '0') ?? 0;  // Safely parse the id
+                        name = result["account_name"]?.toString() ?? '';  // Safely handle null name
                       });
+
+                      print(result);
                     }
                   },
                   child: Container(
@@ -272,12 +272,12 @@ class _AddTransactionState extends State<AddTransaction> {
                       onPressed: () {
                         if (_formKey.currentState?.validate() ?? false) {
                           final transactionData = {
-                            'amount': double.parse(amtcon.text),
-                            'transaction_date': _formatDate(_transactionDate),
-                            'reminder_date': _reminderDate != null ? _formatDate(_reminderDate!) : null,
-                            'note': 'Debit Note',
-                            'type': 'debit',
-                            'account_id': widget.id,
+                            transaction_amount: double.parse(amtcon.text),
+                            transaction_date: _formatDate(_transactionDate),
+                            transaction_reminder_date: _reminderDate != null ? _formatDate(_reminderDate!) : null,
+                            transaction_note: 'Debit Note',
+                            transaction_is_credited: false,
+                            transaction_accountId: accountId,
                           };
 
                           // Print the data before inserting
@@ -287,11 +287,11 @@ class _AddTransactionState extends State<AddTransaction> {
                             DatabaseHelper.instance.updateTransaction(transactionData, int.parse(widget.tid.toString()));
                             print("doneeeeeeeee");
                           }
-                           else{
+                          else{
                             DatabaseHelper.instance.insertTransaction(transactionData);
                             print("doneeeeeeeee");
                           }
-                           Navigator.pop(context);
+                          Navigator.pop(context, true);
                         }
                       },
                       style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
@@ -304,12 +304,12 @@ class _AddTransactionState extends State<AddTransaction> {
                       onPressed: () {
                         if (_formKey.currentState?.validate() ?? false) {
                           final transactionData = {
-                            'amount': double.parse(amtcon.text),
-                            'transaction_date': _formatDate(_transactionDate),
-                            'reminder_date': _reminderDate != null ? _formatDate(_reminderDate!) : null,
-                            'note': 'Credit Note',
-                            'type': 'credit',
-                            'account_id': widget.id,
+                            transaction_amount: double.parse(amtcon.text),
+                            transaction_date: _formatDate(_transactionDate),
+                            transaction_reminder_date: _reminderDate != null ? _formatDate(_reminderDate!) : null,
+                            transaction_note: 'Credit Note',
+                            transaction_is_credited: true,
+                            transaction_accountId: accountId,
                           };
 
                           // Print the data before inserting
@@ -323,11 +323,10 @@ class _AddTransactionState extends State<AddTransaction> {
                             print("doneeeeeeeee");
                           }else {
                             setState(() {
-                              DatabaseHelper.instance.insertTransaction(
-                                  transactionData);
+                              DatabaseHelper.instance.insertTransaction(transactionData);
                             });
                           }
-                          Navigator.pop(context);
+                          Navigator.pop(context, true);
                         }
                       },
                       style: ElevatedButton.styleFrom(backgroundColor: Colors.green),

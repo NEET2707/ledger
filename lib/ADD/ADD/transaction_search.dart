@@ -1,6 +1,35 @@
 import 'package:flutter/material.dart';
 import 'package:ledger/database_helper.dart';
 
+// Table names
+const String tableAccounts = "accounts";
+const String tableTransactions = "transactions";
+
+// Account table field names
+const String accountId = "account_id";
+const String accountName = "account_name";
+const String accountContact = "account_contact";
+const String accountEmail = "account_email";
+const String accountDescription = "account_description";
+const String accountImage = "image";
+const String accountTotal = "account_total";
+const String accountDateAdded = "date_added";
+const String accountDateModified = "date_modified";
+const String accountIsDelete = "is_delete";
+
+// Transaction table field names
+const String transactionAccountId = "account_id";
+const String transactionId = "transaction_id";
+const String transactionAmount = "transaction_amount";
+const String transactionDate = "transaction_date";
+const String transactionIsDueReminder = "is_due_reminder";
+const String transactionReminderDate = "reminder_date";
+const String transactionIsCredited = "is_credited";
+const String transactionNote = "transaction_note";
+const String transactionDateAdded = "date_added";
+const String transactionDateModified = "date_modified";
+const String transactionIsDelete = "is_delete";
+
 class TransactionSearch extends StatefulWidget {
   const TransactionSearch({super.key});
 
@@ -29,8 +58,8 @@ class _TransactionSearchState extends State<TransactionSearch> {
 
   void _filterAccounts(String query) {
     final results = accounts.where((account) {
-      final name = account['name']?.toLowerCase() ?? '';
-      final mobile = account['mobile_number']?.toLowerCase() ?? '';
+      final name = account[accountName]?.toLowerCase() ?? '';
+      final mobile = account[accountContact]?.toLowerCase() ?? '';
       return name.contains(query.toLowerCase()) || mobile.contains(query.toLowerCase());
     }).toList();
 
@@ -76,7 +105,7 @@ class _TransactionSearchState extends State<TransactionSearch> {
                       radius: 24, // Adjust the size as needed
                       backgroundColor: Colors.blueAccent, // Background color of the circle
                       child: Text(
-                        account['name'][0].toUpperCase(), // First letter of the name
+                        account[accountName][0].toUpperCase(), // First letter of the name
                         style: const TextStyle(
                           color: Colors.white, // Text color
                           fontWeight: FontWeight.bold,
@@ -84,8 +113,8 @@ class _TransactionSearchState extends State<TransactionSearch> {
                         ),
                       ),
                     ),
-                    title: Text(account['name'] ?? ''),
-                    subtitle: Text(account['mobile_number'] ?? ''),
+                    title: Text(account[accountName] ?? ''),
+                    subtitle: Text(account[accountContact] ?? ''),
                     onTap: () {
                       Navigator.pop(context, account);
                     },
@@ -93,7 +122,6 @@ class _TransactionSearchState extends State<TransactionSearch> {
                 },
               ),
             ),
-
           ],
         ),
       ),
