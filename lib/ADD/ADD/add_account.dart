@@ -1,11 +1,52 @@
 import 'package:flutter/material.dart';
 import 'package:ledger/account_data.dart';
 import 'package:ledger/colors.dart';
-
 import '../../database_helper.dart'; // Adjust the import according to your project structure
 
+
+// Account table field names
+const String accountId = "account_id";
+const String accountName = "account_name";
+const String accountContact = "account_contact";
+const String accountEmail = "account_email";
+const String accountDescription = "account_description";
+const String accountImage = "image";
+const String accountTotal = "account_total";
+const String accountDateAdded = "date_added";
+const String accountDateModified = "date_modified";
+const String accountIsDelete = "is_delete";
+
+// Transaction table field names
+const String transactionAccountId = "account_id";
+const String transactionId = "transaction_id";
+const String transactionAmount = "transaction_amount";
+const String transactionDate = "transaction_date";
+const String transactionIsDueReminder = "is_due_reminder";
+const String transactionReminderDate = "reminder_date";
+const String transactionIsCredited = "is_credited";
+const String transactionNote = "transaction_note";
+const String transactionDateAdded = "date_added";
+const String transactionDateModified = "date_modified";
+const String transactionIsDelete = "is_delete";
+
+
+
 class AddAccount extends StatefulWidget {
-  const AddAccount({super.key});
+  final String name;
+  final String contact;
+  final String id;
+  final String? email;  // Make email optional
+  final String? description;  // Make description optional
+
+  // Add a constructor to accept these values as parameters
+  const AddAccount({
+    super.key,
+    required this.name,
+    required this.contact,
+    required this.id,
+    this.email,
+    this.description,
+  });
 
   @override
   State<AddAccount> createState() => _AddAccountState();
@@ -17,6 +58,23 @@ class _AddAccountState extends State<AddAccount> {
   final TextEditingController _accountContactController = TextEditingController();
   final TextEditingController _accountEmailController = TextEditingController();
   final TextEditingController _accountDescriptionController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+
+    print(widget.name);
+
+    if(widget.name=="none" && widget.contact=="none" && widget.id=='0'){
+      _accountContactController.text = "";
+      _accountNameController.text = "";
+    }else{
+      _accountNameController.text = widget.name;
+      _accountContactController.text = widget.contact;
+    }
+    if (widget.email != null) _accountEmailController.text = widget.email!;
+    if (widget.description != null) _accountDescriptionController.text = widget.description!;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -68,7 +126,7 @@ class _AddAccountState extends State<AddAccount> {
               TextField(
                 controller: _accountEmailController,
                 decoration: InputDecoration(
-                  labelText: 'Email',
+                  labelText: 'Email', // No asterisk as it is optional
                   border: OutlineInputBorder(),
                 ),
               ),
@@ -76,7 +134,7 @@ class _AddAccountState extends State<AddAccount> {
               TextField(
                 controller: _accountDescriptionController,
                 decoration: InputDecoration(
-                  labelText: 'Description',
+                  labelText: 'Description', // No asterisk as it is optional
                   border: OutlineInputBorder(),
                 ),
               ),

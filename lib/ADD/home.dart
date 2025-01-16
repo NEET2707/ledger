@@ -8,7 +8,6 @@ import '../account_data.dart';
 import '../colors.dart';
 import '../database_helper.dart'; // Import your database helper
 
-
 // Account table field names
 const String accountId = "account_id";
 const String accountName = "account_name";
@@ -34,7 +33,6 @@ const String transactionDateAdded = "date_added";
 const String transactionDateModified = "date_modified";
 const String transactionIsDelete = "is_delete";
 
-
 class Home extends StatefulWidget {
   Home({super.key});
 
@@ -54,7 +52,8 @@ class _AllAccountsState extends State<Home> {
   }
 
   Future<List<Map<String, dynamic>>> _getFilteredAccounts() async {
-    final allAccounts = await DatabaseHelper.instance.fetchAccountsWithBalance();
+    final allAccounts =
+        await DatabaseHelper.instance.fetchAccountsWithBalance();
     if (selectedTab == "ALL") {
       return allAccounts; // Show all accounts
     } else if (selectedTab == "DEBIT") {
@@ -68,7 +67,8 @@ class _AllAccountsState extends State<Home> {
   }
 
   Future<Map<String, double>> _calculateTotals() async {
-    final accountList = await DatabaseHelper.instance.fetchAccountsWithBalance();
+    final accountList =
+        await DatabaseHelper.instance.fetchAccountsWithBalance();
 
     double totalBalance = 0;
     double totalCredits = 0;
@@ -140,25 +140,35 @@ class _AllAccountsState extends State<Home> {
             onTap: () async {
               final shouldRefresh = await Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => AddTransaction()), // Ensure TransactionPage is defined
+                MaterialPageRoute(
+                    builder: (context) =>
+                        AddTransaction()), // Ensure TransactionPage is defined
               );
 
               if (shouldRefresh == true) {
                 setState(() {
-                  accounts = _getFilteredAccounts(); // Refresh the accounts list
+                  accounts =
+                      _getFilteredAccounts(); // Refresh the accounts list
                 });
               }
             },
           ),
-
           SpeedDialChild(
             child: Icon(Icons.person_add, color: Colors.black),
             backgroundColor: Colors.white,
             label: 'Add Account',
             labelStyle: TextStyle(fontSize: 16),
             onTap: () {
-              Navigator.push(context,
-                  MaterialPageRoute(builder: (context) => AddAccount()));
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => AddAccount(
+                    name: 'none', // Replace with actual value
+                    contact: 'none', // Replace with actual value
+                    id: '0', // Replace with actual value
+                  ),
+                ),
+              );
             },
           ),
         ],
@@ -173,7 +183,8 @@ class _AllAccountsState extends State<Home> {
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return Container(
                   color: Colors.blueAccent,
-                  padding: EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+                  padding:
+                      EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
                   child: Center(
                     child: CircularProgressIndicator(),
                   ),
@@ -181,7 +192,8 @@ class _AllAccountsState extends State<Home> {
               } else if (snapshot.hasError) {
                 return Container(
                   color: Colors.blueAccent,
-                  padding: EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+                  padding:
+                      EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
                   child: Center(
                     child: Text(
                       'Error: ${snapshot.error}',
@@ -197,14 +209,14 @@ class _AllAccountsState extends State<Home> {
 
                 return Container(
                   color: Colors.blueAccent,
-                  padding: EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+                  padding:
+                      EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       Text(
                         "Current A/C:",
-                        style: TextStyle(
-                            fontSize: 16, color: Colors.white),
+                        style: TextStyle(fontSize: 16, color: Colors.white),
                       ),
                       SizedBox(height: 4),
                       Text(
@@ -287,7 +299,8 @@ class _AllAccountsState extends State<Home> {
 
           Expanded(
             child: FutureBuilder<List<Map<String, dynamic>>>(
-              future: _getFilteredAccounts(), // Fetch filtered accounts based on selected tab
+              future:
+                  _getFilteredAccounts(), // Fetch filtered accounts based on selected tab
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return Center(child: CircularProgressIndicator());
@@ -301,46 +314,59 @@ class _AllAccountsState extends State<Home> {
                     padding: const EdgeInsets.all(12.0),
                     child: ListView.separated(
                       separatorBuilder: (context, index) {
-                        return Container(color: Colors.white,child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                          child: Divider(),
-                        ));
+                        return Container(
+                          color: Colors.white,
+                          child: Padding(
+                            padding:
+                                const EdgeInsets.symmetric(horizontal: 8.0),
+                            child: Divider(),
+                          ),
+                        );
                       },
                       itemCount: accountList.length,
                       itemBuilder: (context, index) {
                         final account = accountList[index];
                         final balance = account['balance'] ?? 0.0;
 
-                        print("accccccc id _>> $account");
+                        print("Account ID: $account");
 
                         return Container(
                           color: Colors.white,
                           child: ListTile(
-                            contentPadding: EdgeInsets.symmetric(horizontal: 8), // Comfortable padding
+                            contentPadding: EdgeInsets.symmetric(
+                                horizontal: 8), // Comfortable padding
                             leading: CircleAvatar(
                               radius: 24.0, // Larger circle avatar for emphasis
                               backgroundColor: themecolor,
                               child: Text(
-                                account['account_name'][0].toUpperCase(),
-                                style: TextStyle(color: Colors.white, fontSize: 18.0, fontWeight: FontWeight.bold),
+                                account[accountName][0].toUpperCase(),
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 18.0,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                             ),
                             title: Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 Text(
-                                  account['account_name'],
+                                  account[accountName],
                                   style: TextStyle(
                                     fontWeight: FontWeight.bold,
-                                    fontSize: 16.0, // Slightly larger font for the name
+                                    fontSize:
+                                        16.0, // Slightly larger font for the name
                                   ),
                                 ),
                                 Text(
                                   "₹ ${balance.toStringAsFixed(2)}",
                                   style: TextStyle(
-                                    color: balance >= 0 ? Colors.green : Colors.red,
+                                    color: balance >= 0
+                                        ? Colors.green
+                                        : Colors.red,
                                     fontWeight: FontWeight.bold,
-                                    fontSize: 16.0, // Match font size for uniformity
+                                    fontSize:
+                                        16.0, // Match font size for uniformity
                                   ),
                                 ),
                               ],
@@ -348,25 +374,114 @@ class _AllAccountsState extends State<Home> {
                             subtitle: Padding(
                               padding: const EdgeInsets.only(top: 4.0),
                               child: Text(
-                                '${account['account_contact']}',
-                                style: TextStyle(fontSize: 14.0, color: Colors.grey[600]),
+                                '${account[accountContact]}',
+                                style: TextStyle(
+                                    fontSize: 14.0, color: Colors.grey[600]),
                               ),
                             ),
-                            trailing: IconButton(
-                              icon: Icon(Icons.arrow_forward_ios, color: Colors.black, size: 18,), // Icon is white
-                              onPressed: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => AccountData(
-                                      name: account['account_name'],
-                                      id: account['account_id'].toString(),
-                                      num: account['account_contact'],
+                            trailing: PopupMenuButton<String>(
+                              icon: const Icon(Icons.more_vert),
+                              onSelected: (value) async {
+                                if (value == 'edit') {
+                                  final shouldRefresh = await Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => AddAccount(
+                                        name: account[accountName],
+                                        contact: account[accountContact],
+                                        id: account[accountId].toString(),
+                                        email: account[accountEmail],
+                                        description: account[accountDescription],
+                                      ),
                                     ),
-                                  ),
-                                );
+                                  );
+
+                                  if (shouldRefresh == true) {
+                                    setState(() {
+                                      accounts = _getFilteredAccounts(); // Refresh accounts after editing
+                                    });
+                                  }
+                                } else if (value == 'delete') {
+                                  // Show confirmation dialog before deleting
+                                  final shouldDelete = await showDialog<bool>(
+                                    context: context,
+                                    builder: (BuildContext context) {
+                                      return AlertDialog(
+                                        title: const Text('Confirm Delete'),
+                                        content: const Text('Are you sure you want to delete this account?'),
+                                        actions: [
+                                          TextButton(
+                                            onPressed: () => Navigator.of(context).pop(false), // Cancel
+                                            child: const Text('Cancel'),
+                                          ),
+                                          TextButton(
+                                            onPressed: () => Navigator.of(context).pop(true), // Confirm
+                                            child: const Text('Delete'),
+                                          ),
+                                        ],
+                                      );
+                                    },
+                                  );
+
+                                  if (shouldDelete == true) {
+                                    // Proceed with the deletion
+                                    final db = await DatabaseHelper.instance.database;
+
+                                    // Delete the account from the database
+                                    await db.delete(
+                                      'accounts', // Table name
+                                      where: '$accountId = ?', // Account ID field name
+                                      whereArgs: [account[accountId]], // Pass the account ID
+                                    );
+
+                                    // Refresh the account list after deletion
+                                    setState(() {
+                                      accounts = _getFilteredAccounts(); // Refresh the accounts list
+                                    });
+                                  }
+                                }
                               },
+                              itemBuilder: (BuildContext context) => [
+                                PopupMenuItem(
+                                  value: 'edit',
+                                  child: Row(
+                                    children: const [
+                                      Icon(Icons.edit, color: Colors.blue),
+                                      SizedBox(width: 8),
+                                      Text('Edit', style: TextStyle(fontSize: 16)),
+                                    ],
+                                  ),
+                                ),
+                                PopupMenuItem(
+                                  value: 'delete',
+                                  child: Row(
+                                    children: const [
+                                      Icon(Icons.delete, color: Colors.red),
+                                      SizedBox(width: 8),
+                                      Text('Delete', style: TextStyle(fontSize: 16)),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              elevation: 4,
                             ),
+
+
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => AccountData(
+                                    name: account[accountName],
+                                    id: account[accountId].toString(),
+                                    num: account[accountContact],
+                                  ),
+                                ),
+                              );
+                            },
                           ),
                         );
                       },
@@ -387,7 +502,8 @@ class _AllAccountsState extends State<Home> {
         onTap: () {
           setState(() {
             selectedTab = title;
-            accounts = _getFilteredAccounts(); // Update accounts based on selected tab
+            accounts =
+                _getFilteredAccounts(); // Update accounts based on selected tab
           });
         },
         child: Container(

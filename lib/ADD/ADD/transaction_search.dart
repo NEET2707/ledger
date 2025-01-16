@@ -72,8 +72,9 @@ class _TransactionSearchState extends State<TransactionSearch> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Search Accounts'),
+        title: const Text('Search Accounts', style: TextStyle(color: Colors.white),),
         backgroundColor: Colors.blue,
+        foregroundColor: Colors.white,
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -116,7 +117,14 @@ class _TransactionSearchState extends State<TransactionSearch> {
                     title: Text(account[accountName] ?? ''),
                     subtitle: Text(account[accountContact] ?? ''),
                     onTap: () {
-                      Navigator.pop(context, account);
+                      print("====> $account");
+                      Navigator.pop(context, {
+                        "accid": account[accountId],
+                        "accname":account[accountName]
+                      });
+                      setState(() {
+
+                      });
                     },
                   );
                 },

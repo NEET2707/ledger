@@ -7,29 +7,29 @@ import 'ADD/ADD/transaction_search.dart';
 import 'ADD/home.dart';
 
 // Account table field names
-const String accountFieldId = "account_id";
-const String accountFieldName = "account_name";
-const String accountFieldContact = "account_contact";
-const String accountFieldEmail = "account_email";
-const String accountFieldDescription = "account_description";
-const String accountFieldImage = "image";
-const String accountFieldTotal = "account_total";
-const String accountFieldDateAdded = "date_added";
-const String accountFieldDateModified = "date_modified";
-const String accountFieldIsDelete = "is_delete";
+const String accountId = "account_id";
+const String accountName = "account_name";
+const String accountContact = "account_contact";
+const String accountEmail = "account_email";
+const String accountDescription = "account_description";
+const String accountImage = "image";
+const String accountTotal = "account_total";
+const String accountDateAdded = "date_added";
+const String accountDateModified = "date_modified";
+const String accountIsDelete = "is_delete";
 
 // Transaction table field names
-const String transactionFieldAccountId = "account_id";
-const String transactionFieldId = "transaction_id";
-const String transactionFieldAmount = "transaction_amount";
-const String transactionFieldDate = "transaction_date";
-const String transactionFieldIsDueReminder = "is_due_reminder";
-const String transactionFieldReminderDate = "reminder_date";
-const String transactionFieldIsCredited = "is_credited";  // Corrected here
-const String transactionFieldNote = "transaction_note";
-const String transactionFieldDateAdded = "date_added";
-const String transactionFieldDateModified = "date_modified";
-const String transactionFieldIsDelete = "is_delete";
+const String transactionAccountId = "account_id";
+const String transactionId = "transaction_id";
+const String transactionAmount = "transaction_amount";
+const String transactionDate = "transaction_date";
+const String transactionIsDueReminder = "is_due_reminder";
+const String transactionReminderDate = "reminder_date";
+const String transactionIsCredited = "is_credited";
+const String transactionNote = "transaction_note";
+const String transactionDateAdded = "date_added";
+const String transactionDateModified = "date_modified";
+const String transactionIsDelete = "is_delete";
 
 class AccountData extends StatefulWidget {
   final String name;
@@ -50,8 +50,6 @@ class _AccountDataState extends State<AccountData> {
 
   Color backgroundColor = themecolor;
 
-  get transactionTransactionDate => null;
-
   @override
   void initState() {
     super.initState();
@@ -62,9 +60,9 @@ class _AccountDataState extends State<AccountData> {
     final db = await DatabaseHelper.instance.database;
     final data = await db.query(
       tableTransactions, // Use table name constant
-      where: '$transactionFieldAccountId = ?', // Use field constant
+      where: '$transactionAccountId = ?', // Use field constant
       whereArgs: [int.parse(widget.id)],
-      orderBy: '$transactionFieldDate DESC', // Use field constant for date
+      orderBy: '$transactionDate DESC', // Use field constant for date
     );
 
     setState(() {
@@ -76,8 +74,8 @@ class _AccountDataState extends State<AccountData> {
       totalDebit = 0.0;
 
       for (var txn in data) {
-        double amount = txn[transactionFieldAmount] as double; // Use field constant for amount
-        if (txn[transactionFieldIsCredited] == 1) { // Use field constant for credit check
+        double amount = txn[transactionAmount] as double; // Use field constant for amount
+        if (txn[transactionIsCredited] == 1) { // Use field constant for credit check
           accountBalance += amount;
           totalCredit += amount;
         } else {
@@ -205,7 +203,7 @@ class _AccountDataState extends State<AccountData> {
               itemCount: transactions.length,
               itemBuilder: (context, index) {
                 final transaction = transactions[index];
-                final isCredit = transaction[transactionFieldIsCredited] == 1; // Use field constant for credit check
+                final isCredit = transaction[transactionIsCredited] == 1; // Use field constant for credit check
                 return Card(
                   elevation: 2,
                   margin: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 6.0),
@@ -221,14 +219,14 @@ class _AccountDataState extends State<AccountData> {
                       ),
                     ),
                     title: Text(
-                      "₹ ${transaction[transactionFieldAmount]}",
+                      "₹ ${transaction[transactionAmount]}",
                       style: TextStyle(
                         color: isCredit ? Colors.green : Colors.red,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                     subtitle: Text(
-                      transaction[transactionFieldDate], // Use field constant for date
+                      transaction[transactionDate], // Use field constant for date
                       style: const TextStyle(color: Colors.grey),
                     ),
                     trailing: PopupMenuButton<String>(
@@ -245,7 +243,7 @@ class _AccountDataState extends State<AccountData> {
                                 id: widget.id, // Pass the ID for editing
                                 name: widget.name,
                                 flag: true,
-                                tid: transaction[transactionFieldId].toString(), // Use field constant for transaction ID
+                                tid: transaction[transactionId].toString(), // Use field constant for transaction ID
                               ),
                             ),
                           );
@@ -276,8 +274,8 @@ class _AccountDataState extends State<AccountData> {
                             final db = await DatabaseHelper.instance.database;
                             await db.delete(
                               tableTransactions, // Use table name constant
-                              where: '$transactionFieldId = ?', // Use field constant
-                              whereArgs: [transactions[index][transactionFieldId]], // Pass the transaction ID
+                              where: '$transactionId = ?', // Use field constant
+                              whereArgs: [transactions[index][transactionId]], // Pass the transaction ID
                             );
 
                             // Refresh the transactions list
@@ -340,3 +338,4 @@ class _AccountDataState extends State<AccountData> {
     );
   }
 }
+

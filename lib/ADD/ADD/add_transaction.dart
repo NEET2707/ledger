@@ -5,6 +5,33 @@ import 'package:ledger/account_data.dart';
 import 'package:ledger/colors.dart';
 import 'package:ledger/database_helper.dart';
 
+
+
+// Account table field names
+const String accountId = "account_id";
+const String accountName = "account_name";
+const String accountContact = "account_contact";
+const String accountEmail = "account_email";
+const String accountDescription = "account_description";
+const String accountImage = "image";
+const String accountTotal = "account_total";
+const String accountDateAdded = "date_added";
+const String accountDateModified = "date_modified";
+const String accountIsDelete = "is_delete";
+
+// Transaction table field names
+const String transactionAccountId = "account_id";
+const String transactionId = "transaction_id";
+const String transactionAmount = "transaction_amount";
+const String transactionDate = "transaction_date";
+const String transactionIsDueReminder = "is_due_reminder";
+const String transactionReminderDate = "reminder_date";
+const String transactionIsCredited = "is_credited";
+const String transactionNote = "transaction_note";
+const String transactionDateAdded = "date_added";
+const String transactionDateModified = "date_modified";
+const String transactionIsDelete = "is_delete";
+
 class AddTransaction extends StatefulWidget {
   final String? name;
   final String? id;
@@ -45,21 +72,21 @@ class _AddTransactionState extends State<AddTransaction> {
     final db = await DatabaseHelper.instance.database;
     final result = await db.query(
       'transactions',
-      where: '$transaction_id = ?',
+      where: '$transactionId = ?',
       whereArgs: [id],
     );
 
     if (result.isNotEmpty) {
       final transaction = result.first;
       setState(() {
-        amtcon.text = (transaction[transaction_amount] as double?)?.toString() ?? '';  // Cast to double
-        _transactionDate = DateTime.parse(transaction[transaction_date] as String);  // Cast to String, then parse
-        _reminderDate = transaction[transaction_reminder_date] != null
-            ? DateTime.parse(transaction[transaction_reminder_date] as String)  // Cast to String, then parse
+        amtcon.text = (transaction[transactionAmount] as double?)?.toString() ?? '';  // Cast to double
+        _transactionDate = DateTime.parse(transaction[transactionDate] as String);  // Cast to String, then parse
+        _reminderDate = transaction[transactionReminderDate] != null
+            ? DateTime.parse(transaction[transactionReminderDate] as String)  // Cast to String, then parse
             : null;
         _isReminderChecked = _reminderDate != null;
         // Ensure the account name is set correctly
-        name = transaction["account_name"]?.toString() ?? '';  // Use null-aware operators to handle null values
+        name = transaction[accountName]?.toString() ?? '';  // Use null-aware operators to handle null values
       });
     }
   }
@@ -140,11 +167,11 @@ class _AddTransactionState extends State<AddTransaction> {
                     );
                     if (result != null) {
                       setState(() {
-                        accountId = int.tryParse(result["account_id"]?.toString() ?? '0') ?? 0;  // Safely parse the id
-                        name = result["account_name"]?.toString() ?? '';  // Safely handle null name
+                        accountId = int.tryParse(result["accid"]?.toString() ?? '0') ?? 0;  // Safely parse the id
+                        name = result["accname"]?.toString() ?? '';  // Safely handle null name
                       });
 
-                      print(result);
+                      print("==========> $result");
                     }
                   },
                   child: Container(
@@ -272,11 +299,11 @@ class _AddTransactionState extends State<AddTransaction> {
                       onPressed: () {
                         if (_formKey.currentState?.validate() ?? false) {
                           final transactionData = {
-                            transaction_amount: double.parse(amtcon.text),
-                            transaction_date: _formatDate(_transactionDate),
-                            transaction_reminder_date: _reminderDate != null ? _formatDate(_reminderDate!) : null,
-                            transaction_note: 'Debit Note',
-                            transaction_is_credited: false,
+                            transactionAmount: double.parse(amtcon.text),
+                            transactionDate: _formatDate(_transactionDate),
+                            transactionReminderDate: _reminderDate != null ? _formatDate(_reminderDate!) : null,
+                            transactionNote: 'Debit Note',
+                            transactionIsCredited: false,
                             transaction_accountId: accountId,
                           };
 
@@ -304,11 +331,11 @@ class _AddTransactionState extends State<AddTransaction> {
                       onPressed: () {
                         if (_formKey.currentState?.validate() ?? false) {
                           final transactionData = {
-                            transaction_amount: double.parse(amtcon.text),
-                            transaction_date: _formatDate(_transactionDate),
-                            transaction_reminder_date: _reminderDate != null ? _formatDate(_reminderDate!) : null,
-                            transaction_note: 'Credit Note',
-                            transaction_is_credited: true,
+                            transactionAmount: double.parse(amtcon.text),
+                            transactionDate: _formatDate(_transactionDate),
+                            transactionReminderDate: _reminderDate != null ? _formatDate(_reminderDate!) : null,
+                            transactionNote: 'Credit Note',
+                            transactionIsCredited: true,
                             transaction_accountId: accountId,
                           };
 
