@@ -5,30 +5,7 @@ import 'package:ledger/database_helper.dart';
 const String tableAccounts = "accounts";
 const String tableTransactions = "transactions";
 
-// Account table field names
-const String accountId = "account_id";
-const String accountName = "account_name";
-const String accountContact = "account_contact";
-const String accountEmail = "account_email";
-const String accountDescription = "account_description";
-const String accountImage = "image";
-const String accountTotal = "account_total";
-const String accountDateAdded = "date_added";
-const String accountDateModified = "date_modified";
-const String accountIsDelete = "is_delete";
 
-// Transaction table field names
-const String transactionAccountId = "account_id";
-const String transactionId = "transaction_id";
-const String transactionAmount = "transaction_amount";
-const String transactionDate = "transaction_date";
-const String transactionIsDueReminder = "is_due_reminder";
-const String transactionReminderDate = "reminder_date";
-const String transactionIsCredited = "is_credited";
-const String transactionNote = "transaction_note";
-const String transactionDateAdded = "date_added";
-const String transactionDateModified = "date_modified";
-const String transactionIsDelete = "is_delete";
 
 class TransactionSearch extends StatefulWidget {
   const TransactionSearch({super.key});

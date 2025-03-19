@@ -2,34 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:ledger/ADD/ADD/add_transaction.dart';
 import 'package:ledger/colors.dart';
 import 'package:ledger/database_helper.dart';
+import 'package:ledger/settings/currencymanager.dart';
 
 import 'ADD/ADD/transaction_search.dart';
 import 'ADD/home.dart';
+import 'ADD/settings.dart';
 
-// Account table field names
-const String accountId = "account_id";
-const String accountName = "account_name";
-const String accountContact = "account_contact";
-const String accountEmail = "account_email";
-const String accountDescription = "account_description";
-const String accountImage = "image";
-const String accountTotal = "account_total";
-const String accountDateAdded = "date_added";
-const String accountDateModified = "date_modified";
-const String accountIsDelete = "is_delete";
 
-// Transaction table field names
-const String transactionAccountId = "account_id";
-const String transactionId = "transaction_id";
-const String transactionAmount = "transaction_amount";
-const String transactionDate = "transaction_date";
-const String transactionIsDueReminder = "is_due_reminder";
-const String transactionReminderDate = "reminder_date";
-const String transactionIsCredited = "is_credited";
-const String transactionNote = "transaction_note";
-const String transactionDateAdded = "date_added";
-const String transactionDateModified = "date_modified";
-const String transactionIsDelete = "is_delete";
 
 class AccountData extends StatefulWidget {
   final String name;
@@ -59,10 +38,10 @@ class _AccountDataState extends State<AccountData> {
   Future<void> _fetchTransactions() async {
     final db = await DatabaseHelper.instance.database;
     final data = await db.query(
-      tableTransactions, // Use table name constant
-      where: '$transactionAccountId = ?', // Use field constant
+      'transactions',
+      where: '$transaction_accountId = ?',
       whereArgs: [int.parse(widget.id)],
-      orderBy: '$transactionDate DESC', // Use field constant for date
+      orderBy: '$transaction_date DESC',
     );
 
     setState(() {
@@ -74,8 +53,8 @@ class _AccountDataState extends State<AccountData> {
       totalDebit = 0.0;
 
       for (var txn in data) {
-        double amount = txn[transactionAmount] as double; // Use field constant for amount
-        if (txn[transactionIsCredited] == 1) { // Use field constant for credit check
+        double amount = txn[textlink.transactionAmount] as double; // Use field constant for amount
+        if (txn[textlink.transactionIsCredited] == 1) { // Use field constant for credit check
           accountBalance += amount;
           totalCredit += amount;
         } else {
@@ -100,6 +79,12 @@ class _AccountDataState extends State<AccountData> {
         title: Text(
           widget.name,
           style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+        ),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: (){
+            Navigator.pop(context,true);
+          },
         ),
       ),
       body: SingleChildScrollView(
@@ -126,7 +111,7 @@ class _AccountDataState extends State<AccountData> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    "₹ ${accountBalance.toStringAsFixed(2)}",
+                    "${CurrencyManager.cr} ${accountBalance.toStringAsFixed(2)}",
                     style: const TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
@@ -155,7 +140,7 @@ class _AccountDataState extends State<AccountData> {
                           ),
                           const SizedBox(width: 6),
                           Text(
-                            "₹ ${totalCredit.toStringAsFixed(2)} Credit",
+                            "${CurrencyManager.cr} ${totalCredit.toStringAsFixed(2)} Credit",
                             style: const TextStyle(fontSize: 14, color: Colors.white),
                           ),
                         ],
@@ -177,7 +162,7 @@ class _AccountDataState extends State<AccountData> {
                           ),
                           const SizedBox(width: 6),
                           Text(
-                            "₹ ${totalDebit.toStringAsFixed(2)} Debit",
+                            "${CurrencyManager.cr} ${totalDebit.toStringAsFixed(2)} Debit",
                             style: const TextStyle(fontSize: 14, color: Colors.white),
                           ),
                         ],
@@ -189,130 +174,137 @@ class _AccountDataState extends State<AccountData> {
             ),
             const SizedBox(height: 16),
             // Transactions List
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12.0),
-              child: const Text(
-                "Transactions",
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-            ),
-            const SizedBox(height: 8),
-            ListView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: transactions.length,
-              itemBuilder: (context, index) {
-                final transaction = transactions[index];
-                final isCredit = transaction[transactionIsCredited] == 1; // Use field constant for credit check
-                return Card(
-                  elevation: 2,
-                  margin: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 6.0),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
+            Card(
+              color: Colors.white,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min, // 👈 Ensures Column doesn't take full height
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8),
+                    child: const Text(
+                      "Transactions",
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    ),
                   ),
-                  child: ListTile(
-                    leading: CircleAvatar(
-                      backgroundColor: isCredit ? Colors.green : Colors.red,
-                      child: Icon(
-                        isCredit ? Icons.arrow_upward : Icons.arrow_downward,
-                        color: Colors.white,
-                      ),
-                    ),
-                    title: Text(
-                      "₹ ${transaction[transactionAmount]}",
-                      style: TextStyle(
-                        color: isCredit ? Colors.green : Colors.red,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    subtitle: Text(
-                      transaction[transactionDate], // Use field constant for date
-                      style: const TextStyle(color: Colors.grey),
-                    ),
-                    trailing: PopupMenuButton<String>(
-                      icon: const Icon(Icons.more_vert),
-                      onSelected: (value) async {
-                        if (value == 'edit') {
-                          print('Edit action');
-                          // Get the current transaction details
-                          final transaction = transactions[index]; // Assuming you have an 'index' variable
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => AddTransaction(
-                                id: widget.id, // Pass the ID for editing
-                                name: widget.name,
-                                flag: true,
-                                tid: transaction[transactionId].toString(), // Use field constant for transaction ID
+                  ListView.separated(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: transactions.length,
+                    itemBuilder: (context, index) {
+                      final transaction = transactions[index];
+                      final isCredit = transaction[textlink.transactionIsCredited] == 1;
+
+                      return ListTile(
+                        visualDensity: VisualDensity(vertical: -4),
+                        leading: CircleAvatar(
+                          backgroundColor: isCredit ? Colors.green : Colors.red,
+                          child: Icon(
+                            isCredit ? Icons.arrow_upward : Icons.arrow_downward,
+                            color: Colors.white,
+                          ),
+                        ),
+                        title: Text(
+                          "${CurrencyManager.cr} ${transaction[textlink.transactionAmount]}",
+                          style: TextStyle(
+                            color: isCredit ? Colors.green : Colors.red,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        subtitle: Text(
+                          transaction[textlink.transactionDate],
+                          style: const TextStyle(color: Colors.grey),
+                        ),
+                        trailing: PopupMenuButton<String>(
+                          icon: const Icon(Icons.more_vert),
+                          onSelected: (value) async {
+                            if (value == 'edit') {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => AddTransaction(
+                                    id: widget.id,
+                                    name: widget.name,
+                                    flag: true,
+                                    tid: transaction[textlink.transactionId].toString(),
+                                  ),
+                                ),
+                              );
+                            } else if (value == 'delete') {
+                              final shouldDelete = await showDialog<bool>(
+                                context: context,
+                                builder: (BuildContext context) {
+                                  return AlertDialog(
+                                    title: const Text('Confirm Delete'),
+                                    content: const Text('Are you sure you want to delete this transaction?'),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () => Navigator.of(context).pop(false),
+                                        child: const Text('Cancel'),
+                                      ),
+                                      TextButton(
+                                        onPressed: () => Navigator.of(context).pop(true),
+                                        child: const Text('Delete'),
+                                      ),
+                                    ],
+                                  );
+                                },
+                              );
+
+                              if (shouldDelete == true) {
+                                final db = await DatabaseHelper.instance.database;
+                                await db.delete(
+                                  tableTransactions,
+                                  where: '$textlink.transactionId = ?',
+                                  whereArgs: [transaction[textlink.transactionId]],
+                                );
+                                _fetchTransactions();
+                              }
+                            }
+                          },
+                          itemBuilder: (BuildContext context) => [
+                            PopupMenuItem(
+                              value: 'edit',
+                              child: Row(
+                                children: const [
+                                  Icon(Icons.edit, color: Colors.blue),
+                                  SizedBox(width: 8),
+                                  Text('Edit', style: TextStyle(fontSize: 16)),
+                                ],
                               ),
                             ),
-                          );
-                        } else if (value == 'delete') {
-                          // Confirmation dialog before deletion
-                          final shouldDelete = await showDialog<bool>(
-                            context: context,
-                            builder: (BuildContext context) {
-                              return AlertDialog(
-                                title: const Text('Confirm Delete'),
-                                content: const Text('Are you sure you want to delete this transaction?'),
-                                actions: [
-                                  TextButton(
-                                    onPressed: () => Navigator.of(context).pop(false), // Cancel
-                                    child: const Text('Cancel'),
-                                  ),
-                                  TextButton(
-                                    onPressed: () => Navigator.of(context).pop(true), // Confirm
-                                    child: const Text('Delete'),
-                                  ),
+                            PopupMenuItem(
+                              value: 'delete',
+                              child: Row(
+                                children: const [
+                                  Icon(Icons.delete, color: Colors.red),
+                                  SizedBox(width: 8),
+                                  Text('Delete', style: TextStyle(fontSize: 16)),
                                 ],
-                              );
-                            },
-                          );
-
-                          if (shouldDelete == true) {
-                            // Proceed with deletion
-                            final db = await DatabaseHelper.instance.database;
-                            await db.delete(
-                              tableTransactions, // Use table name constant
-                              where: '$transactionId = ?', // Use field constant
-                              whereArgs: [transactions[index][transactionId]], // Pass the transaction ID
-                            );
-
-                            // Refresh the transactions list
-                            _fetchTransactions();
-                          }
-                        }
-                      },
-                      itemBuilder: (BuildContext context) => [
-                        PopupMenuItem(
-                          value: 'edit',
-                          child: Row(
-                            children: const [
-                              Icon(Icons.edit, color: Colors.blue),
-                              SizedBox(width: 8),
-                              Text('Edit', style: TextStyle(fontSize: 16)),
-                            ],
+                              ),
+                            ),
+                          ],
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
                           ),
+                          elevation: 4,
                         ),
-                        PopupMenuItem(
-                          value: 'delete',
-                          child: Row(
-                            children: const [
-                              Icon(Icons.delete, color: Colors.red),
-                              SizedBox(width: 8),
-                              Text('Delete', style: TextStyle(fontSize: 16)),
-                            ],
-                          ),
+                      );
+                    },
+                    separatorBuilder: (context, index) {
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                        child: Divider(
+                          height: 0.2,
+                          thickness: 1,
+                          indent: 8,
+                          endIndent: 8,
                         ),
-                      ],
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      elevation: 4,
-                    ),
+                      );
+                    },
                   ),
-                );
-              },
+                ],
+              ),
             ),
           ],
         ),
