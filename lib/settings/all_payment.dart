@@ -3,7 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
-import '../database_helper.dart';
+import '../DataBase/database_helper.dart';
 
 class AllPaymentPage extends StatefulWidget {
   const AllPaymentPage({super.key});
@@ -142,8 +142,8 @@ class _AllPaymentPageState extends State<AllPaymentPage> {
         ''';
 
         List<dynamic> whereArgs = [
-          DateFormat('dd MMM yyyy').format(startDate!),
-          DateFormat('dd MMM yyyy').format(endDate!), // No need to add +1 day
+          DateFormat('yyyy-MM-dd').format(startDate!),
+          DateFormat('yyyy-MM-dd').format(endDate!), // No need to add +1 day
         ];
 
         final rawDates = await db.rawQuery('SELECT DISTINCT transaction_date FROM transactions LIMIT 10');
@@ -261,55 +261,60 @@ class _AllPaymentPageState extends State<AllPaymentPage> {
           const Divider(),
           Expanded(
             child: SingleChildScrollView(
-              scrollDirection: Axis.vertical,
-              child: DataTable(
-                columnSpacing: 35,
-                horizontalMargin: 12,
-                dataRowMinHeight: 30,
-                dataRowMaxHeight: 40,
-                headingRowHeight: 36,
-                columns: const [
-                  DataColumn(
-                    label: Text(
-                      "Account",
-                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                  DataColumn(
-                    label: Text(
-                      "Date",
-                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                  DataColumn(
-                    label: Text(
-                      "Amount (Dr/Cr)",
-                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                ],
-                rows: transactions.map((t) {
-                  final isCredit = t['is_credited'] == 1;
-                  return DataRow(
-                    cells: [
-                      DataCell(Text(
-                        t['account_name'] ?? '',
-                        style: const TextStyle(fontSize: 11),
-                      )),
-                      DataCell(Text(
-                        formatDate(t['transaction_date']),
-                        style: const TextStyle(fontSize: 11),
-                      )),
-                      DataCell(Text(
-                        "${t['transaction_amount']} ${isCredit ? 'Cr' : 'Dr'}",
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: isCredit ? Colors.green : Colors.red,
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minWidth: MediaQuery.of(context).size.width),
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.vertical,
+                  child: DataTable(
+                    columnSpacing: 65,
+                    horizontalMargin: 12,
+                    dataRowMinHeight: 30,
+                    dataRowMaxHeight: 40,
+                    headingRowHeight: 36,
+                    columns: const [
+                      DataColumn(
+                        label: Text(
+                          "Account",
+                          style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
                         ),
-                      )),
+                      ),
+                      DataColumn(
+                        label: Text(
+                          "Date",
+                          style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                      DataColumn(
+                        label: Text(
+                          "Amount (Dr/Cr)",
+                          style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                        ),
+                      ),
                     ],
-                  );
-                }).toList(),
+                    rows: transactions.map((t) {
+                      final isCredit = t['is_credited'] == 1;
+                      return DataRow(
+                        cells: [
+                          DataCell(Text(
+                            t['account_name'] ?? '',
+                            style: const TextStyle(fontSize: 11),
+                          )),
+                          DataCell(Text(
+                            formatDate(t['transaction_date']),
+                            style: const TextStyle(fontSize: 11),
+                          )),
+                          DataCell(Text(
+                            "${t['transaction_amount']} ${isCredit ? 'Cr' : 'Dr'}",
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: isCredit ? Colors.green : Colors.red,
+                            ),
+                          )),
+                        ],
+                      );
+                    }).toList(),
+                  ),
+                ),
               ),
             ),
           ),

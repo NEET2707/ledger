@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:ledger/password/pin_verify.dart';
 import '../ADD/home.dart';
 import '../main.dart';
-import '../sharedpreferences.dart';
+import '../DataBase/sharedpreferences.dart';
 
 class SplashScreen extends StatefulWidget {
   @override

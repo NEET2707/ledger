@@ -3,7 +3,7 @@ import 'package:flutter_contacts/flutter_contacts.dart';
 
 import '../ADD/ADD/add_account.dart';
 import '../account_data.dart';
-import '../database_helper.dart';
+import '../DataBase/database_helper.dart';
 import 'currencymanager.dart';
 
 class AllAccountsPage extends StatefulWidget {
@@ -149,6 +149,7 @@ class _AllAccountsPageState extends State<AllAccountsPage> {
                 contentPadding: EdgeInsets.symmetric(vertical: 0, horizontal: 16),
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
               ),
+              textCapitalization: TextCapitalization.words,
               onChanged: _filterAccounts,
             ),
           ),

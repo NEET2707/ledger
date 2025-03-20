@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../sharedpreferences.dart';
+import '../DataBase/sharedpreferences.dart';
 
 class CurrencyManager extends ChangeNotifier {
   static final CurrencyManager _instance = CurrencyManager._internal();

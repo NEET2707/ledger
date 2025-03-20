@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:ledger/ADD/ADD/add_transaction.dart';
 import 'package:ledger/colors.dart';
-import 'package:ledger/database_helper.dart';
+import 'package:ledger/DataBase/database_helper.dart';
 import 'package:ledger/settings/currencymanager.dart';
-
+import 'package:url_launcher/url_launcher.dart';
 import 'ADD/ADD/transaction_search.dart';
 import 'ADD/home.dart';
 import 'ADD/settings.dart';
@@ -70,6 +70,13 @@ class _AccountDataState extends State<AccountData> {
     });
   }
 
+  Future<void> _launchUrl(String links) async {
+    final Uri _url = Uri.parse(links);
+    if (!await launchUrl(_url)) {
+      throw 'Could not launch $_url';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -97,12 +104,22 @@ class _AccountDataState extends State<AccountData> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  Row(
-                    children: [
-                      const Icon(Icons.call, color: Colors.white),
-                      const SizedBox(width: 8),
-                      Text(widget.num, style: const TextStyle(color: Colors.white)),
-                    ],
+                  GestureDetector(
+                    onTap: () {
+                      _launchUrl('tel:${widget.num}');
+                    },
+                    child: Row(
+                      children: [
+                        const Icon(Icons.call, color: Colors.white),
+                        const SizedBox(width: 8),
+                        Text(
+                          widget.num,
+                          style: const TextStyle(
+                            color: Colors.white,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                   const SizedBox(height: 12),
                   const Text(
@@ -211,15 +228,30 @@ class _AccountDataState extends State<AccountData> {
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                        subtitle: Text(
-                          transaction[textlink.transactionDate],
-                          style: const TextStyle(color: Colors.grey),
+                        subtitle: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              "Txn: ${transaction[textlink.transactionDate]}",
+                              style: const TextStyle(color: Colors.grey),
+                            ),
+                            if ((transaction[textlink.transactionReminderDate] as String?)?.isNotEmpty == true)
+                              Text(
+                                "Due: ${transaction[textlink.transactionReminderDate]}",
+                                style: const TextStyle(color: Colors.redAccent, fontSize: 12),
+                              ),
+                            if ((transaction[textlink.transactionNote] as String?)?.isNotEmpty == true)
+                              Text(
+                                "Note: ${transaction[textlink.transactionNote]}",
+                                style: const TextStyle(color: Colors.black87, fontSize: 12),
+                              ),
+                          ],
                         ),
                         trailing: PopupMenuButton<String>(
                           icon: const Icon(Icons.more_vert),
                           onSelected: (value) async {
                             if (value == 'edit') {
-                              Navigator.push(
+                              var reesult = await Navigator.push(
                                 context,
                                 MaterialPageRoute(
                                   builder: (context) => AddTransaction(
@@ -230,6 +262,9 @@ class _AccountDataState extends State<AccountData> {
                                   ),
                                 ),
                               );
+                              if(reesult == true){
+                                _fetchTransactions();
+                              }
                             } else if (value == 'delete') {
                               final shouldDelete = await showDialog<bool>(
                                 context: context,
@@ -255,7 +290,7 @@ class _AccountDataState extends State<AccountData> {
                                 final db = await DatabaseHelper.instance.database;
                                 await db.delete(
                                   tableTransactions,
-                                  where: '$textlink.transactionId = ?',
+                                  where: '${textlink.transactionId} = ?',
                                   whereArgs: [transaction[textlink.transactionId]],
                                 );
                                 _fetchTransactions();

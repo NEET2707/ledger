@@ -1,6 +1,7 @@
 import 'package:currency_picker/currency_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../backuppage.dart';
 import '../colors.dart';
 import '../main.dart';
 import '../password/set_pin.dart';
@@ -9,7 +10,7 @@ import '../settings/all_payment.dart';
 import '../settings/currencymanager.dart';
 import 'package:url_launcher/url_launcher.dart' show launchUrl;
 
-import '../sharedpreferences.dart';
+import '../DataBase/sharedpreferences.dart';
 
 
 
@@ -145,6 +146,12 @@ class _SettingsState extends State<Settings> {
             icon: Icons.cloud_upload,
             title: "Ledger Book Backup",
             subtitle: "Backup/Restore Your Ledger Book Entries",
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => BackupPage()),
+              );
+            },
           ),
           _buildSettingsCard(
             icon: Icons.currency_exchange,

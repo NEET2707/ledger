@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:ledger/password/pin_verify.dart';
 import '../colors.dart';
-import '../sharedpreferences.dart';
+import '../DataBase/sharedpreferences.dart';
 
 class SetPinScreen extends StatefulWidget {
   @override

@@ -9,7 +9,7 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 import '../account_data.dart';
 import '../colors.dart';
-import '../database_helper.dart';
+import '../DataBase/database_helper.dart';
 import '../settings/currencymanager.dart'; // Import your database helper
 
 
@@ -186,7 +186,7 @@ class _AllAccountsState extends State<Home> {
           IconButton(
             onPressed: () {
               Navigator.push(
-                  context, MaterialPageRoute(builder: (context) => Reminder()));
+                  context, MaterialPageRoute(builder: (context) => ReminderPage()));
             },
             icon: Icon(Icons.notification_add, color: Colors.white),
           ),
@@ -241,18 +241,26 @@ class _AllAccountsState extends State<Home> {
             backgroundColor: Colors.white,
             label: 'Add Account',
             labelStyle: TextStyle(fontSize: 16),
-            onTap: () {
-              Navigator.push(
+            onTap: () async {
+              final shouldRefresh = await Navigator.push(
                 context,
                 MaterialPageRoute(
                   builder: (context) => AddAccount(
-                    name: 'none', // Replace with actual value
-                    contact: 'none', // Replace with actual value
-                    id: '0', // Replace with actual value
+                    name: 'none',
+                    contact: 'none',
+                    id: '0',
                   ),
                 ),
               );
+
+              if (shouldRefresh == true) {
+                setState(() {
+                  accounts = _getFilteredAccounts();
+                  _futureTotals = _calculateTotals();
+                });
+              }
             },
+
           ),
         ],
       ),
@@ -516,7 +524,8 @@ class _AllAccountsState extends State<Home> {
 
                                   // Refresh the account list after deletion
                                   setState(() {
-                                    accounts = _getFilteredAccounts(); // Refresh the accounts list
+                                    accounts = _getFilteredAccounts();
+                                    _futureTotals = _calculateTotals();
                                   });
                                 }
                               }

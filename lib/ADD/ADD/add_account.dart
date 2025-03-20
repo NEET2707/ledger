@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:ledger/account_data.dart';
 import 'package:ledger/colors.dart';
-import '../../database_helper.dart'; // Adjust the import according to your project structure
+import '../../DataBase/database_helper.dart'; // Adjust the import according to your project structure
 
 
 class AddAccount extends StatefulWidget {
@@ -73,6 +73,7 @@ class _AddAccountState extends State<AddAccount> {
                   labelText: 'Name *', // Add asterisk to indicate required field
                   border: OutlineInputBorder(),
                 ),
+                textCapitalization: TextCapitalization.words,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Please enter the account name'; // Validation message for empty Name field
@@ -110,6 +111,7 @@ class _AddAccountState extends State<AddAccount> {
                   labelText: 'Description', // No asterisk as it is optional
                   border: OutlineInputBorder(),
                 ),
+                  textCapitalization: TextCapitalization.words
               ),
               const SizedBox(height: 20),
               SizedBox(
@@ -117,37 +119,49 @@ class _AddAccountState extends State<AddAccount> {
                 child: ElevatedButton(
                   onPressed: () async {
                     if (_formKey.currentState?.validate() ?? false) {
-                      // If the form is valid, insert the data into the database
                       Map<String, dynamic> accountData = {
                         accountName: _accountNameController.text,
                         accountContact: _accountContactController.text,
                         accountEmail: _accountEmailController.text.isEmpty ? null : _accountEmailController.text,
                         accountDescription: _accountDescriptionController.text.isEmpty ? null : _accountDescriptionController.text,
                       };
-                      int id = await DatabaseHelper.instance.insertAccount(accountData);
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => AccountData(
-                            name: _accountNameController.text,
-                            num: _accountContactController.text,
-                            id: id.toString(),
-                          ),
-                        ),
-                      );
 
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Account added with ID: $id')),
-                      );
+                      int id;
+                      if (widget.id == '0') {
+                        id = await DatabaseHelper.instance.insertAccount(accountData);
+
+                        final result = await Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => AccountData(
+                              name: _accountNameController.text,
+                              num: _accountContactController.text,
+                              id: id.toString(),
+                            ),
+                          ),
+                        );
+
+                        if (result == true) {
+                          Navigator.pop(context, true);
+                        }
+
+                      } else {
+                        accountData[accountId] = int.parse(widget.id);
+                        await DatabaseHelper.instance.updateAccount(accountData);
+                        Navigator.pop(context, true);
+                      }
+
                     }
                   },
+
                   style: ElevatedButton.styleFrom(
                     backgroundColor: themecolor, // Set the background color to the theme color
                   ),
-                  child: const Text(
-                    'Add',
+                  child: Text(
+                    widget.id == '0' ? 'Add' : 'Update',
                     style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
                   ),
+
                 ),
               ),
             ],

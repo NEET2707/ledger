@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:ledger/database_helper.dart';
+import 'package:ledger/DataBase/database_helper.dart';
 
 // Table names
 const String tableAccounts = "accounts";

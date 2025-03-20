@@ -3,13 +3,9 @@ import 'package:intl/intl.dart'; // For date formatting
 import 'package:ledger/ADD/ADD/transaction_search.dart';
 import 'package:ledger/account_data.dart';
 import 'package:ledger/colors.dart';
-import 'package:ledger/database_helper.dart';
+import 'package:ledger/DataBase/database_helper.dart';
 
 import '../settings.dart';
-
-
-
-
 
 class AddTransaction extends StatefulWidget {
   final String? name;
@@ -17,7 +13,14 @@ class AddTransaction extends StatefulWidget {
   String? tid;
   bool? flag;
 
-  AddTransaction({super.key, this.name, this.id, this.flag, this.tid});
+  //reminder
+  bool? reminderflag;
+  double? amountFromReminder;
+  bool? iscredit;
+
+
+
+  AddTransaction({super.key, this.name, this.id, this.flag, this.tid, this.reminderflag, this.amountFromReminder, this.iscredit});
 
   @override
   State<AddTransaction> createState() => _AddTransactionState();
@@ -26,6 +29,8 @@ class AddTransaction extends StatefulWidget {
 class _AddTransactionState extends State<AddTransaction> {
   final amtcon = TextEditingController();
   final _formKey = GlobalKey<FormState>();
+  final noteController = TextEditingController();
+  int? _isCredit;
 
   DateTime _transactionDate = DateTime.now();
   DateTime? _reminderDate;
@@ -45,36 +50,71 @@ class _AddTransactionState extends State<AddTransaction> {
       tid = int.tryParse(widget.tid ?? '') ?? 0;  // Safely parse the id as int
       _fetchTransactionDetails(tid);
     }
+
+    if(widget.reminderflag == true){
+      amtcon.text = widget.amountFromReminder.toString();
+
+      if(widget.iscredit == true){
+        _isCredit = 1;
+      }else{
+        _isCredit = 0;
+      }
+    }
+
   }
 
   Future<void> _fetchTransactionDetails(int id) async {
     final db = await DatabaseHelper.instance.database;
     final result = await db.query(
       'transactions',
-      where: '$textlink.transactionId = ?',
+      where: '${textlink.transactionId} = ?',
       whereArgs: [id],
     );
 
     if (result.isNotEmpty) {
       final transaction = result.first;
+
       setState(() {
-        amtcon.text = (transaction[textlink.transactionAmount] as double?)?.toString() ?? '';  // Cast to double
-        _transactionDate = DateTime.parse(transaction[textlink.transactionDate] as String);  // Cast to String, then parse
-        _reminderDate = transaction[textlink.transactionReminderDate] != null
-            ? DateTime.parse(transaction[textlink.transactionReminderDate] as String)  // Cast to String, then parse
-            : null;
+        _isCredit = transaction[textlink.transactionIsCredited] as int?;
+        amtcon.text = (transaction[textlink.transactionAmount] as double?)?.toString() ?? '';
+
+        _transactionDate = DateFormat('dd-MM-yyyy').parse(transaction[textlink.transactionDate] as String);
+
+        final reminderRaw = transaction[textlink.transactionReminderDate] as String?;
+        if (reminderRaw != null && reminderRaw.isNotEmpty) {
+          try {
+            final parsedDate = DateFormat('dd-MM-yyyy').parse(reminderRaw);
+            if (parsedDate.isAfter(DateTime(1999))) {
+              _reminderDate = parsedDate;
+              _isReminderChecked = true;
+            } else {
+              _reminderDate = null;
+              _isReminderChecked = false;
+            }
+          } catch (e) {
+            _reminderDate = null;
+            _isReminderChecked = false;
+            print("Invalid reminder date format: $reminderRaw");
+          }
+        } else {
+          _reminderDate = null;
+          _isReminderChecked = false;
+        }
+
         _isReminderChecked = _reminderDate != null;
-        // Ensure the account name is set correctly
-        name = transaction[accountName]?.toString() ?? '';  // Use null-aware operators to handle null values
+        name = transaction[accountName]?.toString() ?? '';
+        noteController.text = transaction[textlink.transactionNote]?.toString() ?? '';
       });
     }
   }
 
   Future<void> _selectDate(BuildContext context, DateTime initialDate,
       Function(DateTime) onDateSelected) async {
+    final safeInitialDate = initialDate.isBefore(DateTime(2000)) ? DateTime.now() : initialDate;
+
     final DateTime? pickedDate = await showDatePicker(
       context: context,
-      initialDate: initialDate,
+      initialDate: safeInitialDate,
       firstDate: DateTime(2000),
       lastDate: DateTime(2100),
       builder: (context, child) {
@@ -96,8 +136,9 @@ class _AddTransactionState extends State<AddTransaction> {
   }
 
   String _formatDate(DateTime date) {
-    return DateFormat('yyyy-MM-dd').format(date);
+    return DateFormat('yyyy-MM-dd').format(date); // ✅ ISO format
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -213,21 +254,48 @@ class _AddTransactionState extends State<AddTransaction> {
               ),
               const SizedBox(height: 16),
               // Reminder Transaction
-              const Text("Reminder Transaction", style: TextStyle(fontWeight: FontWeight.bold)),
+              const Text("Reminder Transaction",
+                  style: TextStyle(fontWeight: FontWeight.bold)),
               const SizedBox(height: 8),
               Row(
                 children: [
-                  Checkbox(
-                    value: _isReminderChecked,
-                    onChanged: (value) {
+                  GestureDetector(
+                    onTap: () {
                       setState(() {
-                        _isReminderChecked = value ?? false;
+                        _isReminderChecked = !_isReminderChecked;
+                        if (_isReminderChecked) {
+                          _reminderDate = DateTime.now(); // set current date
+                        } else {
+                          _reminderDate = null;
+                        }
                       });
                     },
+                    child: Container(
+                      height: 40,
+                      width: 150,
+                      child: Row(
+                        children: [
+                          Checkbox(
+                            value: _isReminderChecked,
+                            onChanged: (value) {
+                              setState(() {
+                                _isReminderChecked = value ?? false;
+                                if (_isReminderChecked) {
+                                  _reminderDate = DateTime.now(); // set current date
+                                } else {
+                                  _reminderDate = null;
+                                }
+                              });
+                            },
+                          ),
+                          const Text("Due Reminder"),
+                        ],
+                      ),
+                    ),
                   ),
-                  const Text("Due Reminder"),
                   const Spacer(),
-                  Expanded(
+                  Container(
+                    width: 155,
                     child: GestureDetector(
                       onTap: _isReminderChecked
                           ? () {
@@ -256,7 +324,7 @@ class _AddTransactionState extends State<AddTransaction> {
                         ),
                       ),
                     ),
-                  ),
+                  )
                 ],
               ),
               const SizedBox(height: 16),
@@ -264,81 +332,125 @@ class _AddTransactionState extends State<AddTransaction> {
               const Text("Transaction Note", style: TextStyle(fontWeight: FontWeight.bold)),
               const SizedBox(height: 8),
               TextField(
+                controller: noteController,
                 decoration: const InputDecoration(
                   hintText: 'Note',
                   border: OutlineInputBorder(),
                 ),
+                textCapitalization: TextCapitalization.words,
               ),
               const SizedBox(height: 32),
               // Debit and Credit Buttons
               Row(
+
                 children: [
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: () {
-                        if (_formKey.currentState?.validate() ?? false) {
-                          final transactionData = {
-                            textlink.transactionAmount: double.parse(amtcon.text),
-                            textlink.transactionDate: _formatDate(_transactionDate),
-                            textlink.transactionReminderDate: _reminderDate != null ? _formatDate(_reminderDate!) : null,
-                            textlink.transactionNote: 'Debit Note',
-                            textlink.transactionIsCredited: 0,
-                            transaction_accountId: accountId,
-                          };
+                  if (widget.flag == true)
+                  // Show SAVE button in edit mode
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () {
+                          if (_formKey.currentState?.validate() ?? false) {
+                            final transactionData = {
+                              textlink.transactionAmount: double.parse(amtcon.text),
+                              textlink.transactionDate: _formatDate(_transactionDate),
+                              textlink.transactionReminderDate:
+                              _reminderDate != null ? _formatDate(_reminderDate!) : '',
+                              textlink.transactionNote: _isCredit == 1 ? 'Credit Note' : 'Debit Note',
+                              textlink.transactionIsCredited: _isCredit ?? 0,
+                              transaction_accountId: accountId,
+                              textlink.transactionNote: noteController.text,
+                            };
 
-                          // Print the data before inserting
-                          print("Inserting transaction data (DEBIT): $transactionData");
+                            DatabaseHelper.instance.updateTransaction(
+                                transactionData, int.parse(widget.tid.toString()));
 
-                          if(widget.flag == true){
-                            DatabaseHelper.instance.updateTransaction(transactionData, int.parse(widget.tid.toString()));
-                            print("doneeeeeeeee");
+                            print("Updated transaction: $transactionData");
+                            Navigator.pop(context, true);
                           }
-                          else{
+                        },
+                        style: ElevatedButton.styleFrom(backgroundColor: themecolor),
+                        child: const Text("SAVE", style: TextStyle(color: Colors.white),),
+                      ),
+                    )
+                  else if (widget.reminderflag == true)
+                  // Show SAVE button in edit mode
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () {
+                          if (_formKey.currentState?.validate() ?? false) {
+                            final transactionData = {
+                              textlink.transactionAmount: double.parse(amtcon.text),
+                              textlink.transactionDate: _formatDate(_transactionDate),
+                              textlink.transactionReminderDate:
+                              _reminderDate != null ? _formatDate(_reminderDate!) : '',
+                              textlink.transactionNote: widget.iscredit == true ? 'Debit Note' : 'Credit Note',
+                              textlink.transactionIsCredited: _isCredit ?? 0,
+                              transaction_accountId: accountId,
+                              textlink.transactionNote: noteController.text,
+                            };
+
+                            DatabaseHelper.instance.insertTransaction(
+                                transactionData);
+
+                            print("Updated transaction: $transactionData");
+                            Navigator.pop(context, true);
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(backgroundColor: themecolor),
+                        child: const Text("SAVE", style: TextStyle(color: Colors.white),),
+                      ),
+                    )
+
+                  else ...[
+                    // Show both DEBIT and CREDIT buttons in add mode
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () {
+                          if (_formKey.currentState?.validate() ?? false) {
+                            final transactionData = {
+                              textlink.transactionAmount: double.parse(amtcon.text),
+                              textlink.transactionDate: _formatDate(_transactionDate),
+                              textlink.transactionReminderDate:
+                              _reminderDate != null ? _formatDate(_reminderDate!) : null,
+                              // textlink.transactionNote: 'Debit Note',
+                              textlink.transactionIsCredited: 0,
+                              transaction_accountId: accountId,
+                              textlink.transactionNote: noteController.text,
+                            };
+
                             DatabaseHelper.instance.insertTransaction(transactionData);
-                            print("doneeeeeeeee");
+                            Navigator.pop(context, true);
                           }
-                          Navigator.pop(context, true);
-                        }
-                      },
-                      style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-                      child: const Text("DEBIT"),
+                        },
+                        style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                        child: const Text("DEBIT", style: TextStyle(color: Colors.white),),
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: () {
-                        if (_formKey.currentState?.validate() ?? false) {
-                          final transactionData = {
-                            textlink.transactionAmount: double.parse(amtcon.text),
-                            textlink.transactionDate: _formatDate(_transactionDate),
-                            textlink.transactionReminderDate: _reminderDate != null ? _formatDate(_reminderDate!) : null,
-                            textlink.transactionNote: 'Credit Note',
-                            textlink.transactionIsCredited: 1,
-                            transaction_accountId: accountId,
-                          };
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () {
+                          if (_formKey.currentState?.validate() ?? false) {
+                            final transactionData = {
+                              textlink.transactionAmount: double.parse(amtcon.text),
+                              textlink.transactionDate: _formatDate(_transactionDate),
+                              textlink.transactionReminderDate:
+                              _reminderDate != null ? _formatDate(_reminderDate!) : null,
+                              // textlink.transactionNote: 'Credit Note',
+                              textlink.transactionIsCredited: 1,
+                              transaction_accountId: accountId,
+                              textlink.transactionNote: noteController.text,
+                            };
 
-                          // Print the data before inserting
-                          print("Inserting transaction data (CREDIT): $transactionData");
-
-                          if(widget.flag == true){
-                            setState(() {
-                              DatabaseHelper.instance.updateTransaction(transactionData, int.parse(widget.tid.toString()));
-                            });
-
-                            print("doneeeeeeeee");
-                          }else {
-                            setState(() {
-                              DatabaseHelper.instance.insertTransaction(transactionData);
-                            });
+                            DatabaseHelper.instance.insertTransaction(transactionData);
+                            Navigator.pop(context, true);
                           }
-                          Navigator.pop(context, true);
-                        }
-                      },
-                      style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
-                      child: const Text("CREDIT"),
+                        },
+                        style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+                        child: const Text("CREDIT", style: TextStyle(color: Colors.white),),
+                      ),
                     ),
-                  ),
+                  ]
                 ],
               ),
             ],

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'dart:io';
 import '../ADD/home.dart';
 import '../colors.dart';
-import '../sharedpreferences.dart';
+import '../DataBase/sharedpreferences.dart';
 
 class VerifyPinScreen extends StatefulWidget {
   const VerifyPinScreen({super.key});
