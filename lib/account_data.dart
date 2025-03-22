@@ -365,4 +365,3 @@ class _AccountDataState extends State<AccountData> {
     );
   }
 }
-

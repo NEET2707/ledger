@@ -4,6 +4,7 @@ import 'package:ledger/account_data.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../DataBase/database_helper.dart';
 import 'ADD/add_transaction.dart';
+import 'notification_service.dart';
 
 class ReminderPage extends StatefulWidget {
   const ReminderPage({Key? key}) : super(key: key);
@@ -24,35 +25,23 @@ class _ReminderPageState extends State<ReminderPage> with TickerProviderStateMix
     loadReminders();
   }
 
+
   Future<void> loadReminders() async {
     final db = DatabaseHelper.instance;
     List<Map<String, dynamic>> allReminders = await db.getReminderTransactions();
+    final today = DateTime.now();
 
-    final today = DateFormat('yyyy-MM-dd').format(DateTime.now());
-
-    todayReminders.clear();
-    upcomingReminders.clear();
-
-    for (var tx in allReminders) {
-      final rawDate = tx['reminder_date'];
-      if (rawDate != null) {
-        try {
-          final parsedDate = DateTime.parse(rawDate);
-          final txDate = DateFormat('yyyy-MM-dd').format(parsedDate);
-          if (txDate == today) {
-            todayReminders.add(tx);
-          } else if (parsedDate.isAfter(DateTime.now())) {
-            upcomingReminders.add(tx);
-          }
-        } catch (e) {
-          print('⚠️ Skipped invalid reminder_date: $rawDate');
-        }
-      }
-    }
+    todayReminders = allReminders
+        .where((tx) =>
+    DateTime.parse(tx['reminder_date']).day == today.day &&
+        DateTime.parse(tx['reminder_date']).month == today.month &&
+        DateTime.parse(tx['reminder_date']).year == today.year)
+        .toList();
 
     setState(() {});
-  }
 
+    await NotificationService.scheduleDailyReminderNotification(todayReminders);
+  }
   Future<void> _launchUrl(String links) async {
     final Uri _url = Uri.parse(links);
     if (!await launchUrl(_url)) {

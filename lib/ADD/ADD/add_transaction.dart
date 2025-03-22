@@ -402,55 +402,55 @@ class _AddTransactionState extends State<AddTransaction> {
                     )
 
                   else ...[
-                    // Show both DEBIT and CREDIT buttons in add mode
-                    Expanded(
-                      child: ElevatedButton(
-                        onPressed: () {
-                          if (_formKey.currentState?.validate() ?? false) {
-                            final transactionData = {
-                              textlink.transactionAmount: double.parse(amtcon.text),
-                              textlink.transactionDate: _formatDate(_transactionDate),
-                              textlink.transactionReminderDate:
-                              _reminderDate != null ? _formatDate(_reminderDate!) : null,
-                              // textlink.transactionNote: 'Debit Note',
-                              textlink.transactionIsCredited: 0,
-                              transaction_accountId: accountId,
-                              textlink.transactionNote: noteController.text,
-                            };
+                      // Show both DEBIT and CREDIT buttons in add mode
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: () {
+                            if (_formKey.currentState?.validate() ?? false) {
+                              final transactionData = {
+                                textlink.transactionAmount: double.parse(amtcon.text),
+                                textlink.transactionDate: _formatDate(_transactionDate),
+                                textlink.transactionReminderDate:
+                                _reminderDate != null ? _formatDate(_reminderDate!) : null,
+                                // textlink.transactionNote: 'Debit Note',
+                                textlink.transactionIsCredited: 0,
+                                transaction_accountId: accountId,
+                                textlink.transactionNote: noteController.text,
+                              };
 
-                            DatabaseHelper.instance.insertTransaction(transactionData);
-                            Navigator.pop(context, true);
-                          }
-                        },
-                        style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-                        child: const Text("DEBIT", style: TextStyle(color: Colors.white),),
+                              DatabaseHelper.instance.insertTransaction(transactionData);
+                              Navigator.pop(context, true);
+                            }
+                          },
+                          style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                          child: const Text("DEBIT", style: TextStyle(color: Colors.white),),
+                        ),
                       ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: ElevatedButton(
-                        onPressed: () {
-                          if (_formKey.currentState?.validate() ?? false) {
-                            final transactionData = {
-                              textlink.transactionAmount: double.parse(amtcon.text),
-                              textlink.transactionDate: _formatDate(_transactionDate),
-                              textlink.transactionReminderDate:
-                              _reminderDate != null ? _formatDate(_reminderDate!) : null,
-                              // textlink.transactionNote: 'Credit Note',
-                              textlink.transactionIsCredited: 1,
-                              transaction_accountId: accountId,
-                              textlink.transactionNote: noteController.text,
-                            };
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: () {
+                            if (_formKey.currentState?.validate() ?? false) {
+                              final transactionData = {
+                                textlink.transactionAmount: double.parse(amtcon.text),
+                                textlink.transactionDate: _formatDate(_transactionDate),
+                                textlink.transactionReminderDate:
+                                _reminderDate != null ? _formatDate(_reminderDate!) : null,
+                                // textlink.transactionNote: 'Credit Note',
+                                textlink.transactionIsCredited: 1,
+                                transaction_accountId: accountId,
+                                textlink.transactionNote: noteController.text,
+                              };
 
-                            DatabaseHelper.instance.insertTransaction(transactionData);
-                            Navigator.pop(context, true);
-                          }
-                        },
-                        style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
-                        child: const Text("CREDIT", style: TextStyle(color: Colors.white),),
+                              DatabaseHelper.instance.insertTransaction(transactionData);
+                              Navigator.pop(context, true);
+                            }
+                          },
+                          style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+                          child: const Text("CREDIT", style: TextStyle(color: Colors.white),),
+                        ),
                       ),
-                    ),
-                  ]
+                    ]
                 ],
               ),
             ],

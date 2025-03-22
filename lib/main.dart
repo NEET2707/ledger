@@ -1,24 +1,56 @@
 import 'package:flutter/material.dart';
-import 'package:ledger/password/splashscreen.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
-import 'package:ledger/ADD/home.dart';
 import 'package:ledger/settings/currencymanager.dart';
+import 'ADD/notification_service.dart';
+import 'DataBase/database_helper.dart';
+import 'password/splashscreen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  final currencyManager = CurrencyManager();
-  await currencyManager.loadCurrency(); // Load saved currency from SharedPreferences
+  await Permission.notification.request(); // Request permission early
 
   runApp(
-    ChangeNotifierProvider<CurrencyManager>.value(
-      value: currencyManager,
+    ChangeNotifierProvider(
+      create: (_) => CurrencyManager(),
       child: const MyApp(),
     ),
   );
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  @override
+  void initState() {
+    super.initState();
+    Future.delayed(Duration.zero, () async {
+      await NotificationService.initializeNotification(context);
+
+      // ✅ New: Schedule today's reminder notification at 9:00 AM
+      final db = DatabaseHelper.instance;
+      final today = DateTime.now();
+      final allReminders = await db.getReminderTransactions();
+
+      final todayReminders = allReminders.where((tx) {
+        final date = DateTime.parse(tx['reminder_date']);
+        return date.year == today.year &&
+            date.month == today.month &&
+            date.day == today.day;
+      }).toList();
+
+      await NotificationService.scheduleDailyReminderNotification(
+        todayReminders,
+        hour: 9,
+        minute: 0,
+      );
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
