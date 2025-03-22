@@ -7,7 +7,7 @@ import '../ADD/reminder.dart';
 
 class NotificationService {
   static final FlutterLocalNotificationsPlugin _notificationsPlugin =
-  FlutterLocalNotificationsPlugin();
+      FlutterLocalNotificationsPlugin();
 
   static Future<void> _initializeTimeZone() async {
     tz.initializeTimeZones();
@@ -27,34 +27,38 @@ class NotificationService {
 
     await _notificationsPlugin
         .resolvePlatformSpecificImplementation<
-        AndroidFlutterLocalNotificationsPlugin>()
+            AndroidFlutterLocalNotificationsPlugin>()
         ?.createNotificationChannel(
-      const AndroidNotificationChannel(
-        'reminder_channel',
-        'Reminders',
-        description: 'Daily due reminders',
-        importance: Importance.max,
-      ),
-    );
+          const AndroidNotificationChannel(
+            'reminder_channel',
+            'Reminders',
+            description: 'Daily due reminders',
+            importance: Importance.max,
+          ),
+        );
 
     await _notificationsPlugin.initialize(
       initSettings,
-      onDidReceiveNotificationResponse: (response) {
-        if (response.payload == 'reminder') {
-          _navigateToReminderPage(context);
-        }
-      },
+      // onDidReceiveNotificationResponse: (response) {
+      //   if (response.payload == 'reminder') {
+      //     _navigateToReminderPage(context);
+      //   }
+      // },
     );
 
-    final launchDetails =
-    await _notificationsPlugin.getNotificationAppLaunchDetails();
-    if (launchDetails?.didNotificationLaunchApp ?? false) {
-      if (launchDetails!.notificationResponse?.payload == 'reminder') {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          _navigateToReminderPage(context);
-        });
-      }
-    }
+    // final launchDetails =
+    // await _notificationsPlugin.getNotificationAppLaunchDetails();
+    // if (launchDetails?.didNotificationLaunchApp ?? false) {
+    //   if (launchDetails!.notificationResponse?.payload == 'reminder') {
+    //     WidgetsBinding.instance.addPostFrameCallback((_) {
+    //       _navigateToReminderPage(context);
+    //     });
+    //   }
+    // }
+  }
+
+  static Future<NotificationAppLaunchDetails?> getLaunchDetails() async {
+    return await _notificationsPlugin.getNotificationAppLaunchDetails();
   }
 
   static void _navigateToReminderPage(BuildContext context) {
@@ -64,10 +68,10 @@ class NotificationService {
   }
 
   static Future<void> scheduleDailyReminderNotification(
-      List<Map<String, dynamic>> dueReminders, {
-        int hour = 10,
-        int minute = 40,
-      }) async {
+    List<Map<String, dynamic>> dueReminders, {
+    int hour = 9,
+    int minute = 0,
+  }) async {
     if (dueReminders.isEmpty) {
       return;
     }
@@ -121,8 +125,7 @@ class NotificationService {
       return "${tx['account_name']}: ₹${tx['transaction_amount']}";
     }).join("\n");
 
-    final int notificationId =
-        DateTime.now().millisecondsSinceEpoch % 10000;
+    final int notificationId = DateTime.now().millisecondsSinceEpoch % 10000;
 
     await _notificationsPlugin.show(
       notificationId,

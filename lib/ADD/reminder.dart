@@ -31,12 +31,22 @@ class _ReminderPageState extends State<ReminderPage> with TickerProviderStateMix
     List<Map<String, dynamic>> allReminders = await db.getReminderTransactions();
     final today = DateTime.now();
 
-    todayReminders = allReminders
-        .where((tx) =>
-    DateTime.parse(tx['reminder_date']).day == today.day &&
-        DateTime.parse(tx['reminder_date']).month == today.month &&
-        DateTime.parse(tx['reminder_date']).year == today.year)
-        .toList();
+    todayReminders = allReminders.where((tx) {
+      final rawDate = tx['reminder_date'];
+
+      if (rawDate == null || rawDate.toString().trim().isEmpty) return false;
+
+      try {
+        final date = DateTime.parse(rawDate);
+        return date.year == today.year &&
+            date.month == today.month &&
+            date.day == today.day;
+      } catch (e) {
+        print("Invalid reminder_date: $rawDate");
+        return false;
+      }
+    }).toList();
+
 
     setState(() {});
 
@@ -204,6 +214,12 @@ class _ReminderPageState extends State<ReminderPage> with TickerProviderStateMix
     return Scaffold(
       appBar: AppBar(
         title: const Text('Due Reminders'),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: (){
+            Navigator.pop(context,true);
+          },
+        ),
         bottom: TabBar(
           controller: _tabController,
           tabs: const [

@@ -5,7 +5,9 @@ import '../colors.dart';
 import '../DataBase/sharedpreferences.dart';
 
 class VerifyPinScreen extends StatefulWidget {
-  const VerifyPinScreen({super.key});
+  final VoidCallback? onSuccess;
+
+  const VerifyPinScreen({super.key, this.onSuccess});
 
   @override
   State<VerifyPinScreen> createState() => _VerifyPinScreenState();

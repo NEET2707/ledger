@@ -354,7 +354,7 @@ class _AddTransactionState extends State<AddTransaction> {
                               textlink.transactionAmount: double.parse(amtcon.text),
                               textlink.transactionDate: _formatDate(_transactionDate),
                               textlink.transactionReminderDate:
-                              _reminderDate != null ? _formatDate(_reminderDate!) : '',
+                              _reminderDate != null ? _formatDate(_reminderDate!) : null,
                               textlink.transactionNote: _isCredit == 1 ? 'Credit Note' : 'Debit Note',
                               textlink.transactionIsCredited: _isCredit ?? 0,
                               transaction_accountId: accountId,
@@ -382,7 +382,7 @@ class _AddTransactionState extends State<AddTransaction> {
                               textlink.transactionAmount: double.parse(amtcon.text),
                               textlink.transactionDate: _formatDate(_transactionDate),
                               textlink.transactionReminderDate:
-                              _reminderDate != null ? _formatDate(_reminderDate!) : '',
+                              _reminderDate != null ? _formatDate(_reminderDate!) : null,
                               textlink.transactionNote: widget.iscredit == true ? 'Debit Note' : 'Credit Note',
                               textlink.transactionIsCredited: _isCredit ?? 0,
                               transaction_accountId: accountId,

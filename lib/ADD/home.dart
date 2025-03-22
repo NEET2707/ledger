@@ -184,9 +184,18 @@ class _AllAccountsState extends State<Home> {
         ),
         actions: [
           IconButton(
-            onPressed: () {
-              Navigator.push(
-                  context, MaterialPageRoute(builder: (context) => ReminderPage()));
+            onPressed: () async {
+              var reesult = await Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => ReminderPage()),
+              );
+
+              if (reesult == true) {
+                setState(() {
+                  _futureTotals = _calculateTotals(); // ✅ update state to refresh the UI
+                  accounts = _getFilteredAccounts();  // (optional) refresh list too
+                });
+              }
             },
             icon: Icon(Icons.notification_add, color: Colors.white),
           ),
@@ -312,7 +321,7 @@ class _AllAccountsState extends State<Home> {
                       ),
                       SizedBox(height: 4),
                       Text(
-                        "$currency ${totalBalance.toStringAsFixed(2)} ${totalBalance >= 0 ? 'CR' : 'DR'}",
+                        "$currency${totalBalance.toStringAsFixed(2)} ${totalBalance >= 0 ? 'CR' : 'DR'}",
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
@@ -363,7 +372,7 @@ class _AllAccountsState extends State<Home> {
                               ),
                               SizedBox(width: 6),
                               Text(
-                                "$currency${totalDebits.toStringAsFixed(2)} Debit",
+                                "$currency${totalDebits.abs().toStringAsFixed(2)} Debit",
                                 style: TextStyle(
                                     fontSize: 14, color: Colors.white),
                               ),
@@ -452,7 +461,7 @@ class _AllAccountsState extends State<Home> {
                                 ),
                                 SizedBox(width: 8), // Add spacing between text and amount
                                 Text(
-                                  "$currency ${balance.toStringAsFixed(2)}",
+                                  "$currency${balance.abs().toStringAsFixed(2)}",
                                   style: TextStyle(
                                     color: balance >= 0 ? Colors.green : Colors.red,
                                     fontWeight: FontWeight.bold,

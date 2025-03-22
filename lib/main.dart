@@ -6,9 +6,11 @@ import 'ADD/notification_service.dart';
 import 'DataBase/database_helper.dart';
 import 'password/splashscreen.dart';
 
+String? initialNotificationPayload; // ✅ Store payload globally
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Permission.notification.request(); // Request permission early
+  await Permission.notification.request(); // Request early permission
 
   runApp(
     ChangeNotifierProvider(
@@ -32,22 +34,37 @@ class _MyAppState extends State<MyApp> {
     Future.delayed(Duration.zero, () async {
       await NotificationService.initializeNotification(context);
 
-      // ✅ New: Schedule today's reminder notification at 9:00 AM
+      // ✅ Store launch payload if app was opened via notification
+      final launchDetails = await NotificationService.getLaunchDetails();
+      if (launchDetails?.didNotificationLaunchApp ?? false) {
+        initialNotificationPayload =
+            launchDetails!.notificationResponse?.payload;
+      }
+
+      // ✅ Schedule today's reminders
       final db = DatabaseHelper.instance;
       final today = DateTime.now();
       final allReminders = await db.getReminderTransactions();
-
       final todayReminders = allReminders.where((tx) {
-        final date = DateTime.parse(tx['reminder_date']);
-        return date.year == today.year &&
-            date.month == today.month &&
-            date.day == today.day;
+        final rawDate = tx['reminder_date'];
+        if (rawDate == null || rawDate.toString().trim().isEmpty) return false;
+
+        try {
+          final date = DateTime.parse(rawDate);
+          final today = DateTime.now();
+          return date.year == today.year &&
+              date.month == today.month &&
+              date.day == today.day;
+        } catch (e) {
+          print("Invalid reminder_date: $rawDate");
+          return false;
+        }
       }).toList();
 
       await NotificationService.scheduleDailyReminderNotification(
         todayReminders,
-        hour: 9,
-        minute: 0,
+        hour: 13,
+        minute: 52,
       );
     });
   }
@@ -61,7 +78,7 @@ class _MyAppState extends State<MyApp> {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: SplashScreen(),
+      home: SplashScreen(), // App will start here
     );
   }
 }
