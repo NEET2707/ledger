@@ -7,6 +7,10 @@ import '../DataBase/database_helper.dart';
 import 'currencymanager.dart';
 
 class AllAccountsPage extends StatefulWidget {
+  bool isyes;
+  bool boom;
+  AllAccountsPage({super.key, this.isyes = false, required this.boom});
+
   @override
   _AllAccountsPageState createState() => _AllAccountsPageState();
 }
@@ -14,11 +18,24 @@ class AllAccountsPage extends StatefulWidget {
 class _AllAccountsPageState extends State<AllAccountsPage> {
   List<Map<String, dynamic>> _accounts = [];
   List<Map<String, dynamic>> _filteredAccounts = [];
+  bool _isSearching = false;
+  FocusNode searchFocusNode = FocusNode();
+  TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
     _loadAccounts();
+    _searchController.addListener(() {
+      _filterAccounts(_searchController.text);
+    });
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    searchFocusNode.dispose();
+    super.dispose();
   }
 
   Future<void> _loadAccounts() async {
@@ -103,18 +120,57 @@ class _AllAccountsPageState extends State<AllAccountsPage> {
           // Icon(Icons.arrow_forward_ios, size: 16),
         ],
       ),
-      onTap: () {
-        Navigator.pushNamed(context, '/accountDetails', arguments: account);
-      },
+        onTap: () async {
+          final shouldRefresh = await Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => AccountData(
+                name: account['name'], // Make sure this is correct
+                id: account[accountId].toString(),
+                num: account['phone'], // Make sure this is correct
+              ),
+            ),
+          );
+          if (shouldRefresh == true) {
+            setState(() {
+              _loadAccounts();
+              balance();
+              // accounts = _getFilteredAccounts();
+            });
+          }
+        }
     );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.grey.shade50,
       appBar: AppBar(
-        title: Text("All Accounts"),
+        backgroundColor: Colors.grey.shade50,
+        title:_isSearching
+            ? TextField(
+          controller: _searchController,
+          autofocus: true,
+          decoration: InputDecoration(
+            hintText: "Search Clients...",
+            border: InputBorder.none,
+          ),
+        )
+            : const Text("All Accounts"),
+
+        // Text("All Accounts"),
         actions: [
+          IconButton(
+            icon: Icon(_isSearching ? Icons.close : Icons.search),
+            onPressed: () {
+              setState(() {
+                _isSearching = !_isSearching;
+                _searchController.clear();
+                if (!_isSearching) _filterAccounts('');
+              });
+            },
+          ),
           IconButton(
             icon: Icon(Icons.group),
             onPressed: () {
@@ -138,21 +194,21 @@ class _AllAccountsPageState extends State<AllAccountsPage> {
       ),
       body: Column(
         children: [
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: TextField(
-              decoration: InputDecoration(
-                hintText: 'Search',
-                prefixIcon: Icon(Icons.search),
-                filled: true,
-                fillColor: Colors.white,
-                contentPadding: EdgeInsets.symmetric(vertical: 0, horizontal: 16),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-              ),
-              textCapitalization: TextCapitalization.words,
-              onChanged: _filterAccounts,
-            ),
-          ),
+          // Padding(
+          //   padding: const EdgeInsets.all(4),
+          //   child: TextField(
+          //     decoration: InputDecoration(
+          //       hintText: 'Search',
+          //       prefixIcon: Icon(Icons.search),
+          //       filled: true,
+          //       fillColor: Colors.white,
+          //       contentPadding: EdgeInsets.symmetric(vertical: 0, horizontal: 16),
+          //       border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+          //     ),
+          //     textCapitalization: TextCapitalization.words,
+          //     onChanged: _filterAccounts,
+          //   ),
+          // ),
           Expanded(
             child: _filteredAccounts.isEmpty
                 ? Center(child: Text("No accounts found"))

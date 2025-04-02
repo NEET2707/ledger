@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
-import 'colors.dart';
+import 'DataBase/sharedpreferences.dart';
+import 'color/colors.dart';
 import 'DataBase/database_helper.dart';
 
 class BackupPage extends StatefulWidget {
@@ -9,21 +11,49 @@ class BackupPage extends StatefulWidget {
 }
 
 class _BackupPageState extends State<BackupPage> {
-  String storageBackupStatus = "No Backup yet";
+  String storageBackupStatus = "";
+  String lastBackupTime = "";
+
 
   void backupDatabase() async {
     bool success = await DatabaseHelper.backupDatabase();
-    setState(() {
-      storageBackupStatus = success ? "Last Backup: Successful" : "Last Backup: Failed";
-    });
+    if (success) {
+      await _saveLastBackupTime();
+    }
   }
 
   void restoreDatabase() async {
     bool success = await DatabaseHelper.restoreDatabase();
+    if (success) {
+      // await _saveLastRestoreTime();
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _loadLastBackupRestoreTimes();
+  }
+
+
+  Future<void> _loadLastBackupRestoreTimes() async {
+    String? saveddate = await SharedPreferenceHelper.get(prefKey: PrefKey.password);
+    if (saveddate != null && saveddate.isNotEmpty) {
+      setState(() {
+        lastBackupTime = DateFormat("dd MMMM yyyy hh:mm a").format(DateTime.parse(saveddate));
+      });
+    }
+  }
+
+
+  Future<void> _saveLastBackupTime() async {
+    String currentTime = DateTime.now().toString();
+    await SharedPreferenceHelper.save(value: currentTime, prefKey: PrefKey.password);
     setState(() {
-      storageBackupStatus = success ? "Restore Successful!" : "Restore Failed!";
+      lastBackupTime = currentTime;
     });
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -50,6 +80,12 @@ class _BackupPageState extends State<BackupPage> {
                     Text("Back up your Accounts and Ledger Book to your Internal storage. You can restore it from Backup file."),
                     SizedBox(height: 8),
                     Text("$storageBackupStatus", style: TextStyle(fontWeight: FontWeight.bold)),
+                    SizedBox(height: 8),
+                    Text(
+                        lastBackupTime == ""
+                            ? ""
+                            : "Last Backup: $lastBackupTime",
+                        style: TextStyle(fontWeight: FontWeight.bold)),
                     SizedBox(height: 12),
                     SizedBox(
                       width: double.infinity,

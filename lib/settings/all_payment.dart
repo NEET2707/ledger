@@ -261,62 +261,85 @@ class _AllPaymentPageState extends State<AllPaymentPage> {
           const Divider(),
           Expanded(
             child: SingleChildScrollView(
-              child: ConstrainedBox(
-                constraints: BoxConstraints(minWidth: MediaQuery.of(context).size.width),
-                child: SingleChildScrollView(
-                  scrollDirection: Axis.vertical,
-                  child: DataTable(
-                    columnSpacing: 65,
-                    horizontalMargin: 12,
-                    dataRowMinHeight: 30,
-                    dataRowMaxHeight: 40,
-                    headingRowHeight: 36,
-                    columns: const [
-                      DataColumn(
-                        label: Text(
-                          "Account",
-                          style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
-                        ),
+              scrollDirection: Axis.horizontal, // Allow horizontal scrolling
+              child: DataTable(
+                columnSpacing: 36, // Adjust column spacing
+                horizontalMargin: 10,
+                dataRowMinHeight: 30,
+                dataRowMaxHeight: 40,
+                headingRowHeight: 36,
+                columns: const [
+                  DataColumn(
+                    label: Expanded( // Ensures text does not overflow
+                      child: Text(
+                        "Account",
+                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      DataColumn(
-                        label: Text(
-                          "Date",
-                          style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
-                        ),
+                    ),
+                  ),
+                  DataColumn(
+                    label: Expanded(
+                      child: Text(
+                        "Date",
+                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      DataColumn(
-                        label: Text(
-                          "Amount (Dr/Cr)",
-                          style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
-                        ),
+                    ),
+                  ),
+                  DataColumn(
+                    label: Expanded(
+                      child: Text(
+                        "Amount (Dr/Cr)",
+                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                        overflow: TextOverflow.ellipsis,
                       ),
-                    ],
-                    rows: transactions.map((t) {
-                      final isCredit = t['is_credited'] == 1;
-                      return DataRow(
-                        cells: [
-                          DataCell(Text(
+                    ),
+                  ),
+                ],
+                rows: transactions.map((t) {
+                  final isCredit = t['is_credited'] == 1;
+                  return DataRow(
+                    cells: [
+                      DataCell(
+                        SizedBox( // Prevents overflow
+                          width: 100,
+                          child: Text(
                             t['account_name'] ?? '',
-                            style: const TextStyle(fontSize: 11),
-                          )),
-                          DataCell(Text(
+                            style: TextStyle(fontSize: 11),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ),
+                      DataCell(
+                        SizedBox(
+                          width: 80,
+                          child: Text(
                             formatDate(t['transaction_date']),
-                            style: const TextStyle(fontSize: 11),
-                          )),
-                          DataCell(Text(
+                            style: TextStyle(fontSize: 11),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ),
+                      DataCell(
+                        SizedBox(
+                          width: 80,
+                          child: Text(
                             "${t['transaction_amount']} ${isCredit ? 'Cr' : 'Dr'}",
                             style: TextStyle(
                               fontSize: 11,
                               color: isCredit ? Colors.green : Colors.red,
                             ),
-                          )),
-                        ],
-                      );
-                    }).toList(),
-                  ),
-                ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ),
+                    ],
+                  );
+                }).toList(),
               ),
             ),
+
           ),
         ],
       ),
